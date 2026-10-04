@@ -18,4 +18,12 @@ function createUser(email: string, name: string | null) {
     });
 }
 
-export { getUserByEmail, createUser };
+function getUserById(id: string) {
+    return prisma.user.findUnique({
+        where: {
+            id
+        }
+    });
+}
+
+export { getUserByEmail, createUser, getUserById };
