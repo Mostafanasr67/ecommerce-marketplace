@@ -2,6 +2,7 @@ import { Router } from "express";
 import { fetchUserByEmail } from "../controllers/user.controller.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import authMiddleware from "../auth/auth.middleware.js";
+import roleMiddleware from "../middleware/role.middleware.js";
 
 const router = Router();
 
