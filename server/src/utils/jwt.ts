@@ -1,4 +1,6 @@
 import jwt from "jsonwebtoken";
+import "dotenv/config";
+
 interface JwtPayload {
   userId: string;
 }
@@ -7,7 +9,14 @@ function createToken(userId: string) {
 }
 
 function verifyToken(token: string) {
-    return jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+    const payload = jwt.verify(token, process.env.JWT_SECRET!);
+
+    if (typeof payload !== "object" || !payload.userId || typeof payload.userId !== "string") {
+        throw new Error("Invalid token");
+    }
+
+    return payload as JwtPayload;
 }
 
 export { createToken, verifyToken };
+
