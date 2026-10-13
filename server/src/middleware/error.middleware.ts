@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { Prisma } from "../../generated/prisma/client.js";
+import AppError from "../utils/appError.js";
 
 
 function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction) {
@@ -21,7 +22,13 @@ function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunct
     });
   }
 
+  if (err instanceof AppError) {
+  return res.status(err.statusCode).json({
+    error: err.message,
+  });
+}
 
+  console.error(err);
   return res.status(500).json({ error: "Internal Server Error" });
 }
 
