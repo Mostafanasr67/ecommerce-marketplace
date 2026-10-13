@@ -1,9 +1,12 @@
 import "dotenv/config";
 import express from "express";
+
 import healthRoutes from "./routes/health.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import productRoutes from "./routes/product.routes.js";
+
 import errorHandler from "./middleware/error.middleware.js";
 import logger from "./middleware/logger.middleware.js";
 
@@ -18,6 +21,7 @@ app.use("/", healthRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/users", userRoutes);
 app.use("/auth", authRoutes);
+app.use("/products", productRoutes);
 app.use(errorHandler);
 
 
