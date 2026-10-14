@@ -9,6 +9,9 @@ async function getAllProducts(req: Request, res: Response) {
     const search = req.query.search;
     const categoryId = req.query.categoryId;
     const sellerId = req.query.sellerId;
+    const sortBy = req.query.sortBy;
+    const sortOrder = req.query.sortOrder;
+
 
     const limit = Number(limitQuery);
     const page = Number(pageQuery);
@@ -23,10 +26,33 @@ async function getAllProducts(req: Request, res: Response) {
         return;
     }
 
+    if (sortBy !== undefined && typeof sortBy !== "string") {
+        res.status(400).json({ error: "sortBy must be 'name' or 'price'" });
+        return;
+    }
+
+    if (sortBy !== undefined && sortBy !== "name" && sortBy !== "price") {
+        res.status(400).json({ error: "sortBy must be 'name' or 'price'" });
+        return;
+    }
+
+    if (sortOrder !== undefined && typeof sortOrder !== "string") {
+        res.status(400).json({ error: "sortOrder must be 'asc' or 'desc'" });
+        return;
+    }
+
+    if (sortOrder !== undefined && sortOrder !== "asc" && sortOrder !== "desc") {
+        res.status(400).json({ error: "sortOrder must be 'asc' or 'desc'" });
+        return;
+    }
+
     const filters: ProductFilters = {
         ...(search ? { search } : {}),
         ...(categoryId ? { categoryId } : {}),
-        ...(sellerId ? { sellerId } : {})
+        ...(sellerId ? { sellerId } : {}),
+        ...(sortBy ? { sortBy } : {}),
+        ...(sortOrder ? { sortOrder } : {})
+
     };
 
     const response = await getAllProductsService(limit, page, filters);

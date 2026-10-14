@@ -5,20 +5,23 @@ interface ProductFilters {
     search?: string;
     categoryId?: string;
     sellerId?: string;
+    sortBy?: "name" | "price";
+    sortOrder?: "asc" | "desc";
 }
 
 async function getAllProducts(limit: number, page: number, filters: ProductFilters) {
     const where = {
-                ...(filters.search ? { name: { contains: filters.search, mode: "insensitive" as const } } : {}),
-                ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
-                ...(filters.sellerId ? { sellerId: filters.sellerId } : {})
-            }
+        ...(filters.search ? { name: { contains: filters.search, mode: "insensitive" as const } } : {}),
+        ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
+        ...(filters.sellerId ? { sellerId: filters.sellerId } : {})
+    };
 
     const [products, totalCount] = await Promise.all([
         prisma.product.findMany({
             take: limit,
             skip: (page - 1) * limit,
             where,
+            ...(filters.sortBy ? { orderBy: { [filters.sortBy]: filters.sortOrder || "asc" } } : {}),
         }),
         prisma.product.count({
             where
