@@ -1,9 +1,32 @@
 import prisma from "../prisma.js";
 import AppError from "../utils/appError.js";
 
+interface ProductFilters {
+    search?: string;
+    categoryId?: string;
+    sellerId?: string;
+}
 
-function getAllProducts() {
-    return prisma.product.findMany();
+async function getAllProducts(limit: number, page: number, filters: ProductFilters) {
+    const where = {
+                ...(filters.search ? { name: { contains: filters.search, mode: "insensitive" as const } } : {}),
+                ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
+                ...(filters.sellerId ? { sellerId: filters.sellerId } : {})
+            }
+
+    const [products, totalCount] = await Promise.all([
+        prisma.product.findMany({
+            take: limit,
+            skip: (page - 1) * limit,
+            where,
+        }),
+        prisma.product.count({
+            where
+        })
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+    return { products, totalCount, totalPages };
 }
 
 function getProductById(id: string) {
@@ -106,4 +129,4 @@ async function deleteProduct(id: string, userId: string) {
 }
 
 export { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct };
-export type { UpdateProductData };
+export type { UpdateProductData, ProductFilters };

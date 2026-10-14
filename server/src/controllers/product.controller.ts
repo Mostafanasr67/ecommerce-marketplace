@@ -1,10 +1,36 @@
 import type { Request, Response } from "express";
-import type { UpdateProductData } from "../services/product.service.js";
+import type { UpdateProductData, ProductFilters } from "../services/product.service.js";
 import { getAllProducts as getAllProductsService, getProductById as getProductByIdService, createProduct as createProductService, updateProduct as updateProductService, deleteProduct as deleteProductService } from "../services/product.service.js";
 
 async function getAllProducts(req: Request, res: Response) {
-    const products = await getAllProductsService();
-    res.json(products);
+
+    const limitQuery = req.query.limit || 10;
+    const pageQuery = req.query.page || 1;
+    const search = req.query.search;
+    const categoryId = req.query.categoryId;
+    const sellerId = req.query.sellerId;
+
+    const limit = Number(limitQuery);
+    const page = Number(pageQuery);
+
+    if (limit <= 0 || page <= 0 || !Number.isInteger(limit) || !Number.isInteger(page)) {
+        res.status(400).json({ error: "Limit and page must be positive integers" });
+        return;
+    }
+
+    if (search !== undefined && typeof search !== "string" || categoryId !== undefined && typeof categoryId !== "string" || sellerId !== undefined && typeof sellerId !== "string") {
+        res.status(400).json({ error: "Search, categoryId, and sellerId must be strings" });
+        return;
+    }
+
+    const filters: ProductFilters = {
+        ...(search ? { search } : {}),
+        ...(categoryId ? { categoryId } : {}),
+        ...(sellerId ? { sellerId } : {})
+    };
+
+    const response = await getAllProductsService(limit, page, filters);
+    res.json({ products: response.products, pagination: { page, limit, totalCount: response.totalCount, totalPages: response.totalPages } });
 }
 
 async function getProductById(req: Request, res: Response) {
