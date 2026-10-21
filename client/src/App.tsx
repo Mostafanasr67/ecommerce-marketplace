@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Routes, Route } from "react-router-dom";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -9,6 +10,7 @@ import FeaturedProducts from "./components/FeaturedProducts";
 import TopSellers from "./components/TopSellers";
 import RecentlyAdded from "./components/RecentlyAdded";
 import BuyerProtection from "./components/BuyerProtection";
+import ProductDetails from "./components/ProductDetails";
 
 function App() {
 	const [searchQuery, setSearchQuery] = useState("");
@@ -32,21 +34,43 @@ function App() {
 				setCategoryQuery={setCategoryQuery}
 				wishlist={wishlist}
 			/>
-			<main className="min-h-screen bg-surface">
-				<Hero />
-				<Benefits />
-				<Categories />
-				<FeaturedProducts
-					searchQuery={searchQuery}
-					categoryQuery={categoryQuery}
-					wishlist={wishlist}
-					toggleWishlist={toggleWishlist}
+
+			<Routes>
+				<Route
+					path="/"
+					element={
+						<main className="min-h-screen bg-surface">
+							<Hero />
+							<Benefits />
+							<Categories />
+							<FeaturedProducts
+								searchQuery={searchQuery}
+								categoryQuery={categoryQuery}
+								wishlist={wishlist}
+								toggleWishlist={toggleWishlist}
+							/>
+							<TopSellers />
+							<RecentlyAdded
+								wishlist={wishlist}
+								toggleWishlist={toggleWishlist}
+							/>
+							<BuyerProtection />
+						</main>
+					}
 				/>
-				<TopSellers />
-				<RecentlyAdded wishlist={wishlist} toggleWishlist={toggleWishlist} />
-				<BuyerProtection />
-				<Footer />
-			</main>
+
+				<Route
+					path="/products/:id"
+					element={
+						<ProductDetails
+							wishlist={wishlist}
+							toggleWishlist={toggleWishlist}
+						/>
+					}
+				/>
+			</Routes>
+
+			<Footer />
 		</>
 	);
 }

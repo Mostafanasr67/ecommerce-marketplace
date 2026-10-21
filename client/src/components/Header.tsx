@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 type HeaderProps = {
 	searchQuery: string;
 	setSearchQuery: (query: string) => void;
@@ -51,14 +53,14 @@ function Header({
 			<div className="border-b border-outline-variant bg-surface-container-lowest">
 				<div className="mx-auto flex max-w-7xl items-center gap-space-lg px-margin py-space-md">
 					{/* Logo */}
-					<a href="/" className="shrink-0">
+					<Link to="/" className="shrink-0">
 						<span className="font-headline-lg font-bold tracking-tight">
 							SOVEREIGN
 						</span>
 						<span className="block text-label-sm text-on-surface-variant">
 							THE MARKETPLACE
 						</span>
-					</a>
+					</Link>
 
 					{/* Delivery location */}
 					<button
