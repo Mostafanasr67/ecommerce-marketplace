@@ -6,7 +6,7 @@ type ProductCardProps = {
 	image: string;
 	price: number;
 	oldPrice?: number;
-	rating: number;
+	rating?: number;
 	seller: string;
 	badge?: string;
 	wishlist: number[];
@@ -67,7 +67,7 @@ function ProductCard({
 				</h3>
 
 				<p className="mb-space-sm text-label-md text-on-surface-variant">
-					★ {rating.toFixed(1)}
+					★ {rating ? rating.toFixed(1) : "N/A"}
 				</p>
 
 				<div className="flex flex-wrap items-baseline gap-space-sm">

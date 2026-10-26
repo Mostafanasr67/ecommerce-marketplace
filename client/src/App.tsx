@@ -60,6 +60,20 @@ function App() {
 				/>
 
 				<Route
+					path="/products"
+					element={
+						<main className="min-h-screen bg-surface">
+							<FeaturedProducts
+								searchQuery={searchQuery}
+								categoryQuery={categoryQuery}
+								wishlist={wishlist}
+								toggleWishlist={toggleWishlist}
+							/>
+						</main>
+					}
+				/>
+
+				<Route
 					path="/products/:id"
 					element={
 						<ProductDetails

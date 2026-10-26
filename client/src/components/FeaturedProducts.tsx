@@ -1,6 +1,6 @@
 import ProductCard from "./ProductCard";
-import { products } from "../data/products";
 import type { Product } from "../data/products";
+import { useEffect, useState, useRef } from "react";
 
 type FeaturedProductsProps = {
 	searchQuery: string;
@@ -9,14 +9,62 @@ type FeaturedProductsProps = {
 	toggleWishlist: (productId: number) => void;
 };
 
-
-
 function FeaturedProducts({
 	searchQuery,
 	categoryQuery,
 	wishlist,
 	toggleWishlist,
 }: FeaturedProductsProps) {
+	const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	useEffect(() => {
+		// Clear previous timeout
+		if (debounceTimeoutRef.current) {
+			clearTimeout(debounceTimeoutRef.current);
+		}
+
+		const fetchProducts = async () => {
+			setIsLoading(true);
+			setError(null);
+			try {
+				// Build the URL with search query if provided
+				const url = searchQuery.trim()
+					? `http://localhost:5000/products?search=${searchQuery}&categoryId=${categoryQuery}`
+					: `http://localhost:5000/products`;
+
+				const response = await fetch(url);
+				if (!response.ok) {
+					throw new Error(`HTTP error! status: ${response.status}`);
+				}
+				const data = await response.json();
+				setFilteredProducts(data.products || []);
+			} catch (error) {
+				console.error("Error fetching products:", error);
+				setError(
+					error instanceof Error ? error.message : "Failed to fetch products",
+				);
+				setFilteredProducts([]);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		// Set new timeout - wait 500ms after user stops typing
+		debounceTimeoutRef.current = setTimeout(() => {
+			fetchProducts();
+		}, 500);
+
+		// Cleanup on unmount
+		return () => {
+			if (debounceTimeoutRef.current) {
+				clearTimeout(debounceTimeoutRef.current);
+			}
+		};
+	}, [searchQuery, categoryQuery]);
+
 	return (
 		<section
 			id="featured-catalog"
@@ -46,38 +94,38 @@ function FeaturedProducts({
 			</div>
 
 			<div className="grid grid-cols-2 gap-space-md sm:grid-cols-2 lg:grid-cols-4">
-				{(() => {
-					const filteredProducts = products.filter(
-						(product) =>
-							product.id !== 0 && // Exclude "All Products"
-							(product.name
-								.toLowerCase()
-								.includes(searchQuery.trim().toLowerCase()) ||
-								(product.seller
-									?.toLowerCase?.()
-									.includes(searchQuery.trim().toLowerCase()) ??
-									false)) &&
-							(categoryQuery === "" || product.category === categoryQuery),
-					) as Product[];
+				{isLoading && (
+					<div className="col-span-full py-space-xl text-center">
+						<p className="text-body-md text-on-surface-variant">
+							Loading products...
+						</p>
+					</div>
+				)}
 
-					return (
-						<>
-							{filteredProducts.map((product) => (
-								<ProductCard
-									key={product.id}
-									{...product}
-									wishlist={wishlist}
-									toggleWishlist={toggleWishlist}
-								/>
-							))}
-							{filteredProducts.length === 0 && (
-								<p className="py-space-xl text-center text-body-md text-on-surface-variant">
-									No products found. Try another search.
-								</p>
-							)}
-						</>
-					);
-				})()}
+				{error && (
+					<div className="col-span-full py-space-xl text-center">
+						<p className="text-body-md text-error">Error: {error}</p>
+					</div>
+				)}
+
+				{!isLoading && !error && filteredProducts.length === 0 && (
+					<div className="col-span-full py-space-xl text-center">
+						<p className="text-body-md text-on-surface-variant">
+							No products found. Try another search.
+						</p>
+					</div>
+				)}
+
+				{!isLoading &&
+					!error &&
+					filteredProducts.map((product) => (
+						<ProductCard
+							key={product.id}
+							{...product}
+							wishlist={wishlist}
+							toggleWishlist={toggleWishlist}
+						/>
+					))}
 			</div>
 		</section>
 	);

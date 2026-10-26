@@ -13,6 +13,7 @@ async function getAllProducts(req: Request, res: Response) {
     const sortOrder = req.query.sortOrder;
 
 
+
     const limit = Number(limitQuery);
     const page = Number(pageQuery);
 
@@ -51,8 +52,7 @@ async function getAllProducts(req: Request, res: Response) {
         ...(categoryId ? { categoryId } : {}),
         ...(sellerId ? { sellerId } : {}),
         ...(sortBy ? { sortBy } : {}),
-        ...(sortOrder ? { sortOrder } : {})
-
+        ...(sortOrder ? { sortOrder } : {}),
     };
 
     const response = await getAllProductsService(limit, page, filters);
