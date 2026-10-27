@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 type HeaderProps = {
@@ -8,6 +9,11 @@ type HeaderProps = {
 	wishlist: number[];
 };
 
+type category = {
+	id: string;
+	name: string;
+};
+
 function Header({
 	searchQuery,
 	setSearchQuery,
@@ -15,6 +21,18 @@ function Header({
 	setCategoryQuery,
 	wishlist,
 }: HeaderProps) {
+	const [categories, setCategories] = useState<category[]>([]);
+
+	useEffect(() => {
+		fetch("http://localhost:5000/categories")
+			.then((res) => res.json())
+			.then((data) => {
+				// Handle both array and object responses
+				const categoryList = Array.isArray(data) ? data : data.categories || [];
+				setCategories(categoryList);
+			});
+	}, []);
+
 	return (
 		<header>
 			{/* Top announcement bar */}
@@ -121,69 +139,67 @@ function Header({
 			{/* Category navigation */}
 			<nav className="border-b border-outline-variant bg-surface-container-lowest">
 				<div className="mx-auto flex max-w-7xl items-center gap-space-lg overflow-x-auto px-margin py-space-md">
-					<a
-						href="#"
-						className={`shrink-0 font-label-md ${categoryQuery === "" ? "text-primary" : ""}`}
-						onClick={() => setCategoryQuery("")}
+					<Link
+						to="#featured-catalog"
+						className={`shrink-0 text-title-sm ${
+							categoryQuery === ""
+								? "text-primary font-bold text-lg"
+								: "hover:text-primary"
+						}`}
+						onClick={(e) => {
+							e.preventDefault();
+							setCategoryQuery("");
+							setTimeout(() => {
+								document
+									.getElementById("featured-catalog")
+									?.scrollIntoView({ behavior: "smooth" });
+							}, 100);
+						}}
 					>
 						All Categories
-					</a>
+					</Link>
 
-					<a
-						href="#"
-						className={`shrink-0 text-label-md hover:text-primary ${categoryQuery === "Electronics" ? "text-primary" : ""}`}
-						onClick={() => setCategoryQuery("Electronics")}
-					>
-						Electronics
-					</a>
-
-					<a
-						href="#"
-						className={`shrink-0 text-label-md hover:text-primary ${categoryQuery === "Fashion" ? "text-primary" : ""}`}
-						onClick={() => setCategoryQuery("Fashion")}
-					>
-						Fashion
-					</a>
-
-					<a
-						href="#"
-						className={`shrink-0 text-label-md hover:text-primary ${categoryQuery === "Home & Living" ? "text-primary" : ""}`}
-						onClick={() => setCategoryQuery("Home & Living")}
-					>
-						Home & Living
-					</a>
-
-					<a
-						href="#"
-						className={`shrink-0 text-label-md hover:text-primary ${categoryQuery === "Beauty & Personal Care" ? "text-primary" : ""}`}
-						onClick={() => setCategoryQuery("Beauty & Personal Care")}
-					>
-						Beauty & Personal Care
-					</a>
-
-					<a
-						href="#"
-						className={`shrink-0 text-label-md hover:text-primary ${categoryQuery === "Sports & Outdoors" ? "text-primary" : ""}`}
-						onClick={() => setCategoryQuery("Sports & Outdoors")}
-					>
-						Sports & Outdoors
-					</a>
-
-					<a
-						href="#"
-						className={`shrink-0 text-label-md hover:text-primary ${categoryQuery === "Automotive" ? "text-primary" : ""}`}
-						onClick={() => setCategoryQuery("Automotive")}
-					>
-						Automotive
-					</a>
-
-					<a
-						href="#"
-						className={`shrink-0 text-label-md hover:text-primary ${categoryQuery === "Deals" ? "text-primary" : ""}`}
-						onClick={() => setCategoryQuery("Deals")}
+					{categories.map((category) => (
+						<Link
+							key={category.id}
+							to="#featured-catalog"
+							className={`shrink-0 text-title-sm ${
+								categoryQuery === category.id
+									? "text-primary font-bold text-lg"
+									: "hover:text-primary"
+							}`}
+							onClick={(e) => {
+								e.preventDefault();
+								setCategoryQuery(category.id);
+								setTimeout(() => {
+									document
+										.getElementById("featured-catalog")
+										?.scrollIntoView({ behavior: "smooth" });
+								}, 100);
+							}}
+						>
+							{category.name}{" "}
+						</Link>
+					))}
+					<Link
+						to="#featured-catalog"
+						className={`shrink-0 text-title-sm ${
+							categoryQuery === "Deals"
+								? "text-primary font-bold text-lg"
+								: "hover:text-primary"
+						}`}
+						onClick={(e) => {
+							e.preventDefault();
+							setCategoryQuery("Deals");
+							setTimeout(() => {
+								document
+									.getElementById("featured-catalog")
+									?.scrollIntoView({ behavior: "smooth" });
+							}, 100);
+						}}
 					>
 						Deals
-					</a>
+					</Link>
 				</div>
 			</nav>
 		</header>

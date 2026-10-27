@@ -45,8 +45,12 @@ function ProductCard({
 				<button
 					type="button"
 					aria-label={`Add ${name} to wishlist`}
-					className="absolute right-space-sm top-space-sm flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg shadow-sm transition-colors hover:text-error"
-					onClick={() => toggleWishlist(id)}
+					className="absolute right-space-sm top-space-sm z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg shadow-sm transition-colors hover:text-error"
+					onClick={(e) => {
+						e.stopPropagation();
+						e.preventDefault();
+						toggleWishlist(id);
+					}}
 				>
 					{wishlist.includes(id) ? "♥" : "♡"}
 				</button>

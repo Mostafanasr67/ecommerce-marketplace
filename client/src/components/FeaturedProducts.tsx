@@ -1,4 +1,5 @@
 import ProductCard from "./ProductCard";
+import { Link } from "react-router-dom";
 import type { Product } from "../data/products";
 import { useEffect, useState, useRef } from "react";
 
@@ -31,7 +32,7 @@ function FeaturedProducts({
 			setError(null);
 			try {
 				// Build the URL with search query if provided
-				const url = searchQuery.trim()
+				const url = searchQuery.trim() || categoryQuery
 					? `http://localhost:5000/products?search=${searchQuery}&categoryId=${categoryQuery}`
 					: `http://localhost:5000/products`;
 
@@ -85,12 +86,12 @@ function FeaturedProducts({
 					</p>
 				</div>
 
-				<a
-					href="#"
+				<Link
+					to="/products"
 					className="shrink-0 text-label-md font-semibold text-primary hover:underline"
 				>
 					View all →
-				</a>
+				</Link>
 			</div>
 
 			<div className="grid grid-cols-2 gap-space-md sm:grid-cols-2 lg:grid-cols-4">

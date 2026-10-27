@@ -10,9 +10,15 @@ type ProductDetailsProps = {
 
 function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 	const { id } = useParams();
-	const product = products.find((p) => p.id === Number(id));
 	const [quantity, setQuantity] = useState(1);
+	const [product, setProduct] = useState<typeof products[0] | undefined>();
 	const [selectedImage, setSelectedImage] = useState(product?.image || "");
+
+	useEffect(() => {
+		fetch(`http://localhost:5000/products/${id}`)
+			.then((res) => res.json())
+			.then((data) => setProduct(data));
+	}, [id]);
 
 	useEffect(() => {
 		if (product?.image) {
@@ -298,16 +304,16 @@ function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 				<div className="mt-6 grid gap-8 md:grid-cols-[220px_1fr]">
 					<div>
 						<p className="text-5xl font-bold text-on-surface">
-							{product.rating.toFixed(1)}
+							{product.rating?.toFixed(1)}
 							<span className="text-lg text-on-surface-variant">/5</span>
 						</p>
 
 						<div
 							className="mt-2 text-lg text-amber-500"
-							aria-label={`${product.rating} out of 5 stars`}
+							aria-label={`${product.rating ?? 0} out of 5 stars`}
 						>
-							{"★".repeat(Math.round(product.rating))}
-							{"☆".repeat(5 - Math.round(product.rating))}
+							{"★".repeat(Math.round(product.rating ?? 0))}
+							{"☆".repeat(5 - Math.round(product.rating ?? 0))}
 						</div>
 
 						<p className="mt-2 text-sm text-on-surface-variant">

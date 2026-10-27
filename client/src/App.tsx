@@ -42,7 +42,7 @@ function App() {
 						<main className="min-h-screen bg-surface">
 							<Hero />
 							<Benefits />
-							<Categories />
+							<Categories setCategoryQuery={setCategoryQuery} />
 							<FeaturedProducts
 								searchQuery={searchQuery}
 								categoryQuery={categoryQuery}
