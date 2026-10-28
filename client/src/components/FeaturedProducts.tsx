@@ -6,8 +6,8 @@ import { useEffect, useState, useRef } from "react";
 type FeaturedProductsProps = {
 	searchQuery: string;
 	categoryQuery: string;
-	wishlist: number[];
-	toggleWishlist: (productId: number) => void;
+	wishlist: string[];
+	toggleWishlist: (productId: string) => void;
 };
 
 function FeaturedProducts({

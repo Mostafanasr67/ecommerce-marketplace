@@ -2,7 +2,7 @@ import ProductCard from "./ProductCard";
 
 const recentProducts = [
 	{
-		id: 1,
+		id: "16bac0af-eca6-4c74-a6ba-331b5d5878f0",
 		name: "Premium Everyday Backpack",
 		image:
 			"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80",
@@ -12,7 +12,7 @@ const recentProducts = [
 		badge: "Just Added",
 	},
 	{
-		id: 2,
+		id: "708dedc5-4453-433b-9e7e-80bfbbcbe98a",
 		name: "Minimal Ceramic Coffee Set",
 		image:
 			"https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?auto=format&fit=crop&w=600&q=80",
@@ -22,7 +22,7 @@ const recentProducts = [
 		badge: "New Arrival",
 	},
 	{
-		id: 3,
+		id: "941d170b-d275-472f-9b22-370fb77454a9",
 		name: "Wireless Portable Speaker",
 		image:
 			"https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&w=600&q=80",
@@ -33,7 +33,7 @@ const recentProducts = [
 		badge: "Just Added",
 	},
 	{
-		id: 4,
+		id: "d1ed711c-9429-455d-a035-9fb64e2588bf",
 		name: "Classic Leather Wallet",
 		image:
 			"https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=600&q=80",
@@ -45,8 +45,8 @@ const recentProducts = [
 ];
 
 type RecentlyAddedProps = {
-	wishlist: number[];
-	toggleWishlist: (productId: number) => void;
+	wishlist: string[];
+	toggleWishlist: (productId: string) => void;
 };
 
 function RecentlyAdded({ wishlist, toggleWishlist }: RecentlyAddedProps) {

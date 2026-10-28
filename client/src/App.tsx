@@ -11,13 +11,14 @@ import TopSellers from "./components/TopSellers";
 import RecentlyAdded from "./components/RecentlyAdded";
 import BuyerProtection from "./components/BuyerProtection";
 import ProductDetails from "./components/ProductDetails";
+import CartPage from "./components/CartPage";
 
 function App() {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [categoryQuery, setCategoryQuery] = useState("");
-	const [wishlist, setWishlist] = useState<number[]>([]);
+	const [wishlist, setWishlist] = useState<string[]>([]);
 
-	function toggleWishlist(productId: number) {
+	function toggleWishlist(productId: string) {
 		setWishlist((currentWishlist) =>
 			currentWishlist.includes(productId)
 				? currentWishlist.filter((id) => id !== productId)
@@ -82,6 +83,8 @@ function App() {
 						/>
 					}
 				/>
+
+				<Route path="/cart" element={<CartPage wishlist={wishlist} toggleWishlist={toggleWishlist} />} />
 			</Routes>
 
 			<Footer />

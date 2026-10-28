@@ -6,7 +6,7 @@ type HeaderProps = {
 	setSearchQuery: (query: string) => void;
 	categoryQuery: string;
 	setCategoryQuery: (query: string) => void;
-	wishlist: number[];
+	wishlist: string[];
 };
 
 type category = {
@@ -128,10 +128,10 @@ function Header({
 							<span className="ml-space-xs text-label-md">Account</span>
 						</button>
 
-						<button type="button" className="relative">
+						<Link to="/cart" className="relative">
 							🛒
 							<span className="ml-space-xs text-label-md">Cart</span>
-						</button>
+						</Link>
 					</div>
 				</div>
 			</div>

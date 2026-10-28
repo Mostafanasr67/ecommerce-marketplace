@@ -1,5 +1,5 @@
 export type Product = {
-	id: number;
+	id: string;
 	name: string;
 	category: string;
 	image: string;
@@ -12,7 +12,7 @@ export type Product = {
 
 export const products = [
 	{
-		id: 1,
+		id: "abddd8a0-6f79-4bba-9fb5-1b983929b672",
 		name: "Wireless Noise-Cancelling Headphones",
 		category: "Electronics",
 		image:
@@ -24,7 +24,7 @@ export const products = [
 		badge: "Best Seller",
 	},
 	{
-		id: 2,
+		id: "e0a0dfc2-e7e5-47e6-b4be-843626bb861e",
 		name: "Minimal Everyday Sneakers",
 		category: "Fashion",
 		image:
@@ -35,7 +35,7 @@ export const products = [
 		badge: "Trending",
 	},
 	{
-		id: 3,
+		id: "0bad12a8-b0ed-40ea-b290-d3c99fc5f34c",
 		name: "Classic Everyday Wristwatch",
 		category: "Fashion",
 		image:
@@ -46,7 +46,7 @@ export const products = [
 		seller: "Time & Co.",
 	},
 	{
-		id: 4,
+		id: "e1e0bdd6-0bf5-415c-97fe-34a22ef9e040",
 		name: "Modern Ceramic Home Vase",
 		category: "Home & Living",
 		image:

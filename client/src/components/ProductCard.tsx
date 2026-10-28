@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 type ProductCardProps = {
-	id: number;
+	id: string;
 	name: string;
 	image: string;
 	price: number;
@@ -9,8 +9,8 @@ type ProductCardProps = {
 	rating?: number;
 	seller: string;
 	badge?: string;
-	wishlist: number[];
-	toggleWishlist: (productId: number) => void;
+	wishlist: string[];
+	toggleWishlist: (productId: string) => void;
 };
 
 function ProductCard({

@@ -1,12 +1,16 @@
 import { useParams } from "react-router-dom";
 import { products } from "../data/products";
 import { useState, useEffect } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import ProductCard from "./ProductCard";
+import { addCartItem } from "./cart/CartHelper";
+
 
 type ProductDetailsProps = {
-	wishlist: number[];
-	toggleWishlist: (productId: number) => void;
+	wishlist: string[];
+	toggleWishlist: (productId: string) => void;
 };
+
 
 function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 	const { id } = useParams();
@@ -26,6 +30,13 @@ function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 		}
 	}, [product]);
 
+	const queryClient = useQueryClient();
+	const addItemMutation = useMutation({
+		mutationFn: ({ productId, quantity }: { productId: string; quantity: number }) =>
+			addCartItem(productId, quantity),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart"] }),
+	});
+
 	if (!product) {
 		return <p>Product not found</p>;
 	}
@@ -35,6 +46,10 @@ function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 			(item) => item.category === product?.category && item.id !== product?.id,
 		)
 		.slice(0, 4);
+
+	const addItem = (productId: string, quantity: number) => {
+		addItemMutation.mutate({ productId, quantity });
+	};
 
 	return (
 		<main className="min-h-screen bg-surface px-margin py-space-xl">
@@ -185,6 +200,7 @@ function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 
 						<button
 							type="button"
+							onClick={() => addItem(product.id, quantity)}
 							className="w-full rounded-lg bg-primary px-space-lg py-space-md font-semibold text-white transition-colors hover:bg-primary-container sm:w-fit"
 						>
 							Add to Cart
