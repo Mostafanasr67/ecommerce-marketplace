@@ -9,7 +9,7 @@ import OrderSummary from "./cart/OrderSummary";
 import { fetchCartItems, updateCartItemQuantity, removeCartItem} from "./cart/CartHelper";
 
 
-function CartPage({ wishlist, toggleWishlist }: { wishlist: string[]; toggleWishlist: (productId: string) => void }) {
+function CartPage({ wishlist, toggleWishlist }: { wishlist: string[]; toggleWishlist: (productId: string) => void}) {
 	const queryClient = useQueryClient();
 	const cartQuery = useQuery({
 		queryKey: ["cart"],
@@ -40,6 +40,8 @@ function CartPage({ wishlist, toggleWishlist }: { wishlist: string[]; toggleWish
 			(item.originalPrice ? item.originalPrice - item.product.price : 0) * item.quantity,
 		0,
 	);
+
+	const itemCount = items.reduce((count, item) => count + item.quantity, 0);
 
 
 	function updateQuantity(id: string, quantity: number) {
@@ -103,10 +105,7 @@ function CartPage({ wishlist, toggleWishlist }: { wishlist: string[]; toggleWish
 
 					<div className="col-span-12 flex flex-col gap-space-lg lg:col-span-4">
 						<OrderSummary
-							itemCount={items.reduce(
-								(count, item) => count + item.quantity,
-								0,
-							)}
+							itemCount={itemCount}
 							subtotal={subtotal}
 							savings={savings}
 							delivery={items.length > 0 ? 35 : 0}

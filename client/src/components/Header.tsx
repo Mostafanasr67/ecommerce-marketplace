@@ -7,6 +7,7 @@ type HeaderProps = {
 	categoryQuery: string;
 	setCategoryQuery: (query: string) => void;
 	wishlist: string[];
+	cartCount: number;
 };
 
 type category = {
@@ -20,6 +21,7 @@ function Header({
 	categoryQuery,
 	setCategoryQuery,
 	wishlist,
+	cartCount,
 }: HeaderProps) {
 	const [categories, setCategories] = useState<category[]>([]);
 
@@ -131,6 +133,11 @@ function Header({
 						<Link to="/cart" className="relative">
 							🛒
 							<span className="ml-space-xs text-label-md">Cart</span>
+							{cartCount > 0 && (
+								<span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-error text-xs font-bold text-on-error">
+									{cartCount}
+								</span>
+							)}
 						</Link>
 					</div>
 				</div>

@@ -12,11 +12,20 @@ import RecentlyAdded from "./components/RecentlyAdded";
 import BuyerProtection from "./components/BuyerProtection";
 import ProductDetails from "./components/ProductDetails";
 import CartPage from "./components/CartPage";
+import { fetchCartItems } from "./components/cart/CartHelper";
+import { useQuery } from "@tanstack/react-query";
 
 function App() {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [categoryQuery, setCategoryQuery] = useState("");
 	const [wishlist, setWishlist] = useState<string[]>([]);
+
+	const cartQuery = useQuery({
+		queryKey: ["cart"],
+		queryFn: fetchCartItems,
+	});
+
+	const cartCount = cartQuery.data?.reduce((count, item) => count + item.quantity, 0) ?? 0;
 
 	function toggleWishlist(productId: string) {
 		setWishlist((currentWishlist) =>
@@ -34,6 +43,7 @@ function App() {
 				categoryQuery={categoryQuery}
 				setCategoryQuery={setCategoryQuery}
 				wishlist={wishlist}
+				cartCount={cartCount}
 			/>
 
 			<Routes>

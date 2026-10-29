@@ -35,7 +35,7 @@ async function getCartService(userId: string) {
     }
     const cart = await prisma.cart.findUnique({
         where: { userId },
-        include: { cartItems: { include: { product: true } } },
+        include: { cartItems: { include: { product: true }, orderBy: { createdAt: "asc" } } },
     });
 
     if (!cart) {
@@ -46,7 +46,7 @@ async function getCartService(userId: string) {
         });
         return await prisma.cart.findUnique({
             where: { userId },
-            include: { cartItems: { include: { product: true } } },
+            include: { cartItems: { include: { product: true }, orderBy: { createdAt: "asc" } } },
         });
     }
     return cart;
