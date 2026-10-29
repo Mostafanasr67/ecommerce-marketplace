@@ -8,6 +8,7 @@ import categoryRoutes from "./routes/category.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import productRoutes from "./routes/product.routes.js";
 import cartRoutes from "./routes/cart.routes.js";
+import addressRoutes from "./routes/address.routes.js"; 
 
 import errorHandler from "./middleware/error.middleware.js";
 import logger from "./middleware/logger.middleware.js";
@@ -26,6 +27,7 @@ app.use("/users", userRoutes);
 app.use("/auth", authRoutes);
 app.use("/products", productRoutes);
 app.use("/cart", cartRoutes);
+app.use("/addresses", addressRoutes);
 app.use(errorHandler);
 
 
