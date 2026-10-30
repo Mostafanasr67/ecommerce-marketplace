@@ -4,7 +4,8 @@ import {
     getAddressById as getAddressByIdService,
     createAddress as createAddressService,
     updateAddress as updateAddressService,
-    deleteAddress as deleteAddressService
+    deleteAddress as deleteAddressService,
+    setDefaultAddress as setDefaultAddressService
 } from "../services/address.service.js";
 
 async function getAllAddresses(req: Request, res: Response) {
@@ -45,10 +46,19 @@ async function deleteAddress(req: Request, res: Response) {
     res.json(address);
 }
 
+async function setDefaultAddress(req: Request, res: Response) {
+    // Mark one of the logged-in user's addresses as default
+    const { id } = req.params as { id: string };
+    const userId = req.user?.id as string;
+    const address = await setDefaultAddressService(id, userId);
+    res.json(address);
+}
+
 export {
     getAllAddresses,
     getAddressById,
     createAddress,
     updateAddress,
-    deleteAddress
+    deleteAddress,
+    setDefaultAddress
 };

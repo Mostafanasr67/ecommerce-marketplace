@@ -2,8 +2,8 @@ import { useParams } from "react-router-dom";
 import { products } from "../data/products";
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import ProductCard from "./ProductCard";
-import { addCartItem } from "./cart/CartHelper";
+import ProductCard from "../components/products/ProductCard";
+import { addCartItem } from "../components/cart/CartHelper";
 
 
 type ProductDetailsProps = {

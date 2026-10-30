@@ -43,7 +43,7 @@ function Header({
 					{/* Left side: store announcements */}
 					<div className="flex items-center gap-space-sm">
 						<span>
-							🚚 Free delivery on orders over 1,500 EGP across Cairo & Giza
+							🚚 Free delivery on orders over 2000 EGP across Cairo & Giza
 						</span>
 						<span className="text-outline">|</span>
 						<span>🛡️ 100% Genuine Certified Sellers</span>

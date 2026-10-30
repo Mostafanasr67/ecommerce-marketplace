@@ -1,15 +1,25 @@
-import { useMemo} from "react";
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import cartPackages from "../data/cart";
-import CartControls from "./cart/CartControls";
-import CartPackage from "./cart/CartPackage";
-import CheckoutProgress from "./cart/CheckoutProgress";
-import CartRecommendations from "./cart/CartRecommendations";
-import OrderSummary from "./cart/OrderSummary";
-import { fetchCartItems, updateCartItemQuantity, removeCartItem} from "./cart/CartHelper";
+import CartControls from "../components/cart/CartControls";
+import CartPackage from "../components/cart/CartPackage";
+import CheckoutProgress from "../components/cart/CheckoutProgress";
+import CartRecommendations from "../components/cart/CartRecommendations";
+import OrderSummary from "../components/cart/OrderSummary";
+import CartHeader from "../components/cart/CartHeader";
+import {
+	fetchCartItems,
+	updateCartItemQuantity,
+	removeCartItem,
+} from "../components/cart/CartHelper";
 
-
-function CartPage({ wishlist, toggleWishlist }: { wishlist: string[]; toggleWishlist: (productId: string) => void}) {
+function CartPage({
+	wishlist,
+	toggleWishlist,
+}: {
+	wishlist: string[];
+	toggleWishlist: (productId: string) => void;
+}) {
 	const queryClient = useQueryClient();
 	const cartQuery = useQuery({
 		queryKey: ["cart"],
@@ -18,8 +28,13 @@ function CartPage({ wishlist, toggleWishlist }: { wishlist: string[]; toggleWish
 	const items = useMemo(() => cartQuery.data ?? [], [cartQuery.data]);
 
 	const updateQuantityMutation = useMutation({
-		mutationFn: ({ productId, quantity }: { productId: string; quantity: number }) =>
-			updateCartItemQuantity(productId, quantity),
+		mutationFn: ({
+			productId,
+			quantity,
+		}: {
+			productId: string;
+			quantity: number;
+		}) => updateCartItemQuantity(productId, quantity),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart"] }),
 	});
 
@@ -27,7 +42,6 @@ function CartPage({ wishlist, toggleWishlist }: { wishlist: string[]; toggleWish
 		mutationFn: (productId: string) => removeCartItem(productId),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart"] }),
 	});
-
 
 	const subtotal = items.reduce(
 		(total, item) => total + item.product.price * item.quantity,
@@ -37,12 +51,12 @@ function CartPage({ wishlist, toggleWishlist }: { wishlist: string[]; toggleWish
 	const savings = items.reduce(
 		(total, item) =>
 			total +
-			(item.originalPrice ? item.originalPrice - item.product.price : 0) * item.quantity,
+			(item.originalPrice ? item.originalPrice - item.product.price : 0) *
+				item.quantity,
 		0,
 	);
 
 	const itemCount = items.reduce((count, item) => count + item.quantity, 0);
-
 
 	function updateQuantity(id: string, quantity: number) {
 		const item = items.find((currentItem) => currentItem.id === id);
@@ -67,6 +81,7 @@ function CartPage({ wishlist, toggleWishlist }: { wishlist: string[]; toggleWish
 		<main className="min-h-screen bg-surface">
 			<div className="mx-auto w-full max-w-7xl px-margin py-space-xl">
 				<CheckoutProgress />
+				<CartHeader />
 
 				{cartQuery.isError && (
 					<p role="alert" className="mb-space-md text-body-md text-error">
@@ -76,7 +91,7 @@ function CartPage({ wishlist, toggleWishlist }: { wishlist: string[]; toggleWish
 
 				<div className="grid grid-cols-12 items-start gap-space-lg">
 					<section className="col-span-12 flex flex-col gap-space-lg lg:col-span-8">
-						<CartControls subtotal={subtotal}/>
+						<CartControls subtotal={subtotal} />
 
 						{packages.length > 0 ? (
 							packages.map((packageData) => (
@@ -103,13 +118,13 @@ function CartPage({ wishlist, toggleWishlist }: { wishlist: string[]; toggleWish
 						{items?.length > 0 && <CartRecommendations />}
 					</section>
 
-					<div className="col-span-12 flex flex-col gap-space-lg lg:col-span-4">
+					<div className="col-span-12 flex flex-col gap-space-lg lg:sticky lg:top-6 lg:col-span-4 lg:self-start">
 						<OrderSummary
 							itemCount={itemCount}
 							subtotal={subtotal}
 							savings={savings}
 							delivery={items.length > 0 ? 35 : 0}
-						/>	
+						/>
 					</div>
 				</div>
 			</div>

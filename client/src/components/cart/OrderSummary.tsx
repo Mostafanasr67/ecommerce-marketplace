@@ -1,4 +1,5 @@
 import { useState } from "react";
+import {Link} from "react-router-dom";
 
 type OrderSummaryProps = {
 	itemCount: number;
@@ -8,6 +9,7 @@ type OrderSummaryProps = {
 };
 
 const COUPONS = new Map<string, number>([["WELCOME50", 0.5]]);
+
 
 function OrderSummary({
 	itemCount,
@@ -41,7 +43,7 @@ function OrderSummary({
 	}
 
 	return (
-		<aside className="flex flex-col gap-space-lg lg:sticky lg:top-6">
+		<aside className="flex flex-col gap-space-lg">
 			<section className="flex flex-col gap-space-md rounded-xl bg-surface-container-lowest p-space-lg shadow-md">
 				<div className="flex items-center justify-between pb-space-xs">
 					<h2 className="text-headline-sm font-extrabold text-on-surface">
@@ -101,12 +103,12 @@ function OrderSummary({
 					</div>
 				</div>
 
-				<button
-					type="button"
+				<Link
+					to="/address"
 					className="flex w-full items-center justify-center gap-space-sm rounded-xl bg-primary py-3.5 text-label-lg font-bold text-on-primary shadow-md transition-colors hover:bg-primary-container"
 				>
 					<span>Proceed to Checkout ({itemCount} items)</span>
-				</button>
+				</Link>
 
 				
 			</section>

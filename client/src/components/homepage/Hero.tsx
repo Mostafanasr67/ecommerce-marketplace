@@ -1,10 +1,7 @@
-
-import PromoTiles from "./PromoTiles"
-
 function Hero() {
   return (
     <section className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-space-lg px-margin pt-space-lg lg:grid-cols-12">
-      <div className="relative flex min-h-[420px] flex-col justify-between overflow-hidden rounded-xl bg-surface-container-lowest p-space-lg shadow-sm md:p-space-xl lg:col-span-8">
+      <div className="relative flex min-h-[420px] flex-col justify-between overflow-hidden rounded-xl bg-surface-container-lowest p-space-lg shadow-sm md:p-space-xl lg:col-span-12">
         {/* Decorative background effects */}
         <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-primary-fixed/40 blur-3xl" />
 
@@ -80,8 +77,6 @@ function Hero() {
           </div>
         </div>
       </div>
-      
-      <PromoTiles />
     </section>
   )
 }

@@ -35,15 +35,21 @@ function pickAddressFields(data: unknown, partial: boolean): Partial<AddressFiel
 }
 
 async function getAllAddresses(userId: string) {
-    const addresses = await prisma.address.findMany({
-        where: {
-            userId: userId
-        },
-        orderBy: {
-            createdAt: 'asc'
-        }
-    });
-    return addresses;
+    const [addresses, user] = await Promise.all([
+        prisma.address.findMany({
+            where: {
+                userId: userId
+            },
+            orderBy: {
+                createdAt: 'asc'
+            }
+        }),
+        prisma.user.findUnique({
+            where: { id: userId },
+            select: { defaultAddressId: true }
+        })
+    ]);
+    return { addresses, defaultAddressId: user?.defaultAddressId ?? null };
 }
 
 async function getAddressById(id: string, userId: string) {
@@ -79,12 +85,34 @@ async function updateAddress(id: string, data: unknown, userId: string) {
     return address;
 }
 
+// User.defaultAddressId has no foreign key, so clear it manually when its address is deleted.
 async function deleteAddress(id: string, userId: string) {
-    const address = await prisma.address.delete({
-        where: {
-            id: id,
-            userId: userId
-        }
+    const address = await prisma.$transaction(async (tx) => {
+        const deleted = await tx.address.delete({
+            where: {
+                id: id,
+                userId: userId
+            }
+        });
+        await tx.user.updateMany({
+            where: { id: userId, defaultAddressId: id },
+            data: { defaultAddressId: null }
+        });
+        return deleted;
+    });
+    return address;
+}
+
+async function setDefaultAddress(id: string, userId: string) {
+    const address = await prisma.address.findFirst({
+        where: { id: id, userId: userId }
+    });
+    if (!address) {
+        throw new AppError("Address not found", 404);
+    }
+    await prisma.user.update({
+        where: { id: userId },
+        data: { defaultAddressId: id }
     });
     return address;
 }
@@ -94,5 +122,6 @@ export {
     getAddressById,
     createAddress,
     updateAddress,
-    deleteAddress
+    deleteAddress,
+    setDefaultAddress
 };

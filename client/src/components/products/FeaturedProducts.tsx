@@ -1,6 +1,6 @@
 import ProductCard from "./ProductCard";
 import { Link } from "react-router-dom";
-import type { Product } from "../data/products";
+import type { Product } from "../../data/products";
 import { useEffect, useState, useRef } from "react";
 
 type FeaturedProductsProps = {
