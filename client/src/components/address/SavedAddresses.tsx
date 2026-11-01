@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AddressCard from "./AddressCard";
 import {
@@ -10,13 +10,22 @@ import {
 
 type SavedAddressesProps = {
 	onEdit?: (address: Address) => void;
+	selectedAddress: Address | null;
+	setSelectedAddress: (address: Address | null) => void;
 };
 
-function SavedAddresses({ onEdit }: SavedAddressesProps) {
+function SavedAddresses({ onEdit, selectedAddress, setSelectedAddress }: SavedAddressesProps) {
 	const queryClient = useQueryClient();
 	const addressQuery = useQuery({ queryKey: ["addresses"], queryFn: fetchAddresses });
 	const addresses: Address[] = useMemo(() => addressQuery.data?.addresses ?? [], [addressQuery.data]);
 	const defaultAddressId = addressQuery.data?.defaultAddressId ?? null;
+
+	// pre-select the default address if no address is selected
+	useEffect(() => {
+		if (selectedAddress) return;
+		const defaultAddress = addresses.find((address) => address.id === defaultAddressId);
+		if (defaultAddress) setSelectedAddress(defaultAddress);
+	}, [addresses, defaultAddressId, selectedAddress, setSelectedAddress]);
 
 	const deleteAddressMutation = useMutation({
 		mutationFn: (id: string) => {
@@ -54,6 +63,8 @@ function SavedAddresses({ onEdit }: SavedAddressesProps) {
 						address={address}
 						isDefault={address.id === defaultAddressId}
 						onEdit={() => onEdit?.(address)}
+						isSelected={selectedAddress?.id === address.id}
+						onSelect={() => setSelectedAddress(address)}
 						onDelete={() => deleteAddressMutation.mutate(address.id)}
 						onSetDefault={() => setDefaultAddressMutation.mutate(address.id)}
 					/>

@@ -8,14 +8,18 @@ type AddressCardProps = {
 	onEdit?: () => void;
 	onDelete?: () => void;
 	onSetDefault?: () => void;
+	// isSelected?: boolean;
+	onSelect?: () => void;
 };
 
 function AddressCard({
 	address,
 	isDefault,
+	isSelected,
 	onEdit,
 	onDelete,
 	onSetDefault,
+	onSelect,
 }: AddressCardProps) {
 	const [menuOpen, setMenuOpen] = useState(false);
 	const locality = [address.area, address.city, address.country]
@@ -40,9 +44,10 @@ function AddressCard({
 				<input
 					type="radio"
 					name="delivery_address"
-					defaultChecked={isDefault}
+					checked={isSelected}
 					aria-label={`Deliver to ${address.label}`}
 					className="mt-1 h-5 w-5 cursor-pointer accent-primary"
+					onChange={onSelect}
 				/>
 
 				<div className="flex flex-1 flex-col gap-space-sm">

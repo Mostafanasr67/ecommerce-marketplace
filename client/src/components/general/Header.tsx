@@ -82,17 +82,6 @@ function Header({
 						</span>
 					</Link>
 
-					{/* Delivery location */}
-					<button
-						type="button"
-						className="hidden shrink-0 flex-col items-start border-l border-outline-variant pl-space-md text-left md:flex"
-					>
-						<span className="text-label-sm text-on-surface-variant">
-							Deliver to
-						</span>
-						<span className="font-label-md">Cairo, Egypt</span>
-					</button>
-
 					{/* Search bar */}
 					<div className="flex min-w-0 flex-1 items-center rounded-lg bg-surface-container-low px-space-md">
 						<span className="mr-space-sm" aria-hidden="true">

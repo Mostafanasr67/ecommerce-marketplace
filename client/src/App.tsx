@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { Address } from "./components/address/AddressHelper";
 import { Routes, Route } from "react-router-dom";
 
 import Header from "./components/general/Header";
@@ -10,11 +11,15 @@ import { fetchCartItems } from "./components/cart/CartHelper";
 import { useQuery } from "@tanstack/react-query";
 import HomePage from "./pages/HomePage";
 import AddressPage from "./pages/AddressPage";
+import PaymentPage from "./pages/PaymentPage";
+import OrderPage from "./pages/OrderPage";
 
 function App() {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [categoryQuery, setCategoryQuery] = useState("");
 	const [wishlist, setWishlist] = useState<string[]>([]);
+	const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+	const [paymentMethod, setPaymentMethod] = useState("card");
 
 	const cartQuery = useQuery({
 		queryKey: ["cart"],
@@ -89,7 +94,15 @@ function App() {
 				/>
 				<Route
 					path="/address"
-					element={<AddressPage />}
+					element={<AddressPage selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress} />}
+				/>
+				<Route
+					path="/payment"
+					element={<PaymentPage selectedAddress={selectedAddress} paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod} />}
+				/>
+				<Route
+					path="/place-order"
+					element={<OrderPage />}
 				/>
 			</Routes>
 

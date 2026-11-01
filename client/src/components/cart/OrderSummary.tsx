@@ -1,5 +1,5 @@
 import { useState } from "react";
-import {Link} from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
 
 type OrderSummaryProps = {
 	itemCount: number;
@@ -9,6 +9,11 @@ type OrderSummaryProps = {
 };
 
 const COUPONS = new Map<string, number>([["WELCOME50", 0.5]]);
+
+const CHECKOUT_STEPS: Record<string, { to: string; label: string }> = {
+	"/cart": { to: "/address", label: "Proceed to Address" },
+	"/address": { to: "/payment", label: "Proceed to Payment" },
+};
 
 
 function OrderSummary({
@@ -20,6 +25,11 @@ function OrderSummary({
 	const [couponInput, setCouponInput] = useState("");
 	const [appliedCode, setAppliedCode] = useState<string | null>(null);
 	const [couponError, setCouponError] = useState("");
+	const { pathname } = useLocation();
+	const checkoutStep = CHECKOUT_STEPS[pathname] ?? { to: "/address", label: "Proceed to Address" };
+	const isPaymentStep = pathname === "/payment";
+	const checkoutButtonClass =
+		"flex w-full items-center justify-center gap-space-sm rounded-xl bg-primary py-3.5 font-bold shadow-md transition-colors hover:bg-primary-container";
 
 	const discountRate = appliedCode ? (COUPONS.get(appliedCode) ?? 0) : 0;
 	const couponDiscount = Math.round(subtotal * discountRate);
@@ -103,12 +113,15 @@ function OrderSummary({
 					</div>
 				</div>
 
-				<Link
-					to="/address"
-					className="flex w-full items-center justify-center gap-space-sm rounded-xl bg-primary py-3.5 text-label-lg font-bold text-on-primary shadow-md transition-colors hover:bg-primary-container"
-				>
-					<span>Proceed to Checkout ({itemCount} items)</span>
-				</Link>
+				{isPaymentStep ? (
+					<Link to="/place-order" className={checkoutButtonClass}>
+						<span className="text-md text-white">Place Order ({itemCount} items)</span>
+					</Link>
+				) : (
+					<Link to={checkoutStep.to} className={checkoutButtonClass}>
+						<span className="text-md text-white">{checkoutStep.label} ({itemCount} items)</span>
+					</Link>
+				)}
 
 				
 			</section>
