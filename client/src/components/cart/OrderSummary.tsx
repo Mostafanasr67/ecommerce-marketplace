@@ -1,11 +1,16 @@
 import { useState } from "react";
-import {Link, useLocation} from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createOrder } from "../order/OrderHelper";
+import type { Address } from "../address/AddressHelper";
 
 type OrderSummaryProps = {
 	itemCount: number;
 	subtotal: number;
 	savings: number;
 	delivery: number;
+	selectedAddress?: Address | null;
+	paymentMethod?: string;
 };
 
 const COUPONS = new Map<string, number>([["WELCOME50", 0.5]]);
@@ -15,18 +20,31 @@ const CHECKOUT_STEPS: Record<string, { to: string; label: string }> = {
 	"/address": { to: "/payment", label: "Proceed to Payment" },
 };
 
-
 function OrderSummary({
 	itemCount,
 	subtotal,
 	savings,
 	delivery,
+	selectedAddress = null,
+	paymentMethod,
 }: OrderSummaryProps) {
 	const [couponInput, setCouponInput] = useState("");
 	const [appliedCode, setAppliedCode] = useState<string | null>(null);
 	const [couponError, setCouponError] = useState("");
 	const { pathname } = useLocation();
-	const checkoutStep = CHECKOUT_STEPS[pathname] ?? { to: "/address", label: "Proceed to Address" };
+	const navigate = useNavigate();
+	const queryClient = useQueryClient();
+	const placeOrderMutation = useMutation({
+		mutationFn: createOrder,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["cart"] });
+			navigate("/place-order");
+		},
+	});
+	const checkoutStep = CHECKOUT_STEPS[pathname] ?? {
+		to: "/address",
+		label: "Proceed to Address",
+	};
 	const isPaymentStep = pathname === "/payment";
 	const checkoutButtonClass =
 		"flex w-full items-center justify-center gap-space-sm rounded-xl bg-primary py-3.5 font-bold shadow-md transition-colors hover:bg-primary-container";
@@ -34,7 +52,16 @@ function OrderSummary({
 	const discountRate = appliedCode ? (COUPONS.get(appliedCode) ?? 0) : 0;
 	const couponDiscount = Math.round(subtotal * discountRate);
 	const isFreeDelivery = subtotal >= 2000;
-	const total = subtotal - savings - couponDiscount + (isFreeDelivery ? 0 : delivery);
+	const total =
+		subtotal - savings - couponDiscount + (isFreeDelivery ? 0 : delivery);
+
+	function handlePlaceOrder() {
+		if (!selectedAddress) return;
+		placeOrderMutation.mutate({
+			addressId: selectedAddress.id,
+			paymentMethod: paymentMethod === "cod" ? "COD" : "ONLINE",
+		});
+	}
 
 	function applyCoupon() {
 		const code = couponInput.trim().toUpperCase();
@@ -58,7 +85,8 @@ function OrderSummary({
 				<div className="flex items-center justify-between pb-space-xs">
 					<h2 className="text-headline-sm font-extrabold text-on-surface">
 						Order Summary
-					</h2>				</div>
+					</h2>{" "}
+				</div>
 
 				<div className="flex flex-col gap-space-sm text-body-sm text-on-surface-variant">
 					<div className="flex items-center justify-between">
@@ -69,12 +97,20 @@ function OrderSummary({
 					</div>
 					<div className="flex items-center justify-between text-tertiary">
 						<span>Vendor Promotional Savings</span>
-						<span className="font-bold">{savings > 0 ? `-${savings.toLocaleString("en-EG")} EGP` : `0 EGP`}</span>
+						<span className="font-bold">
+							{savings > 0
+								? `-${savings.toLocaleString("en-EG")} EGP`
+								: `0 EGP`}
+						</span>
 					</div>
 					{appliedCode && (
 						<div className="flex items-center justify-between text-tertiary">
-							<span>Coupon {appliedCode} ({discountRate * 100}% off)</span>
-							<span className="font-bold">-{couponDiscount.toLocaleString("en-EG")} EGP</span>
+							<span>
+								Coupon {appliedCode} ({discountRate * 100}% off)
+							</span>
+							<span className="font-bold">
+								-{couponDiscount.toLocaleString("en-EG")} EGP
+							</span>
 						</div>
 					)}
 					<div className="flex items-center justify-between">
@@ -85,12 +121,16 @@ function OrderSummary({
 									{delivery.toLocaleString("en-EG")} EGP
 								</span>
 							)}
-							{isFreeDelivery ? `Free` : delivery.toLocaleString("en-EG") + " EGP"}
+							{isFreeDelivery
+								? `Free`
+								: delivery.toLocaleString("en-EG") + " EGP"}
 						</span>
 					</div>
 					<div className="flex items-center justify-between">
 						<span>Estimated VAT (14%)</span>
-						<span className="text-label-sm text-outline">Included in total</span>
+						<span className="text-label-sm text-outline">
+							Included in total
+						</span>
 					</div>
 				</div>
 
@@ -114,16 +154,35 @@ function OrderSummary({
 				</div>
 
 				{isPaymentStep ? (
-					<Link to="/place-order" className={checkoutButtonClass}>
-						<span className="text-md text-white">Place Order ({itemCount} items)</span>
-					</Link>
+					<>
+						<button
+							type="button"
+							onClick={handlePlaceOrder}
+							disabled={!selectedAddress || placeOrderMutation.isPending}
+							className={`${checkoutButtonClass} disabled:cursor-not-allowed disabled:opacity-60`}
+						>
+							<span className="text-md text-white">
+								{placeOrderMutation.isPending
+									? "Placing Order..."
+									: `Place Order (${itemCount} items)`}
+							</span>
+						</button>
+						{placeOrderMutation.error && (
+							<p role="alert" className="text-label-sm text-error">
+								{placeOrderMutation.error.message}
+							</p>
+						)}
+					</>
 				) : (
-					<Link to={checkoutStep.to} className={checkoutButtonClass}>
-						<span className="text-md text-white">{checkoutStep.label} ({itemCount} items)</span>
+					<Link
+						to={checkoutStep.to}
+						className={checkoutButtonClass}
+					>
+						<span className="text-md text-white">
+							{checkoutStep.label} ({itemCount} items)
+						</span>
 					</Link>
 				)}
-
-				
 			</section>
 
 			<section className="flex flex-col gap-space-sm rounded-xl bg-surface-container-lowest p-space-lg shadow-sm">

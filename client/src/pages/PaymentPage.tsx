@@ -53,6 +53,8 @@ function PaymentPage({ selectedAddress, paymentMethod, setPaymentMethod }: { sel
 							subtotal={subTotal}
 							savings={savings}
 							delivery={35}
+							selectedAddress={selectedAddress}
+							paymentMethod={paymentMethod}
 						/>
 						<FulfillmentSchedule
 							itemCount={itemCount}

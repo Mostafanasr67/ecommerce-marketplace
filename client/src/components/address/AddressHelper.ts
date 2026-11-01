@@ -1,29 +1,6 @@
 const API_URL = "http://localhost:5000";
 
-// Mirrors the Address model in server/prisma/schema.prisma.
-type Address = {
-    id: string;
-    userId: string;
-    label: string;
-    fullName: string;
-    phone: string;
-    street: string;
-    city: string;
-    area: string;
-    country: string;
-    building: string;
-    apartment: string;
-    createdAt: string;
-    updatedAt: string;
-};
-
-// Every field is required by the server when creating an address.
-type AddressInput = Pick<
-    Address,
-    "label" | "fullName" | "phone" | "street" | "city" | "area" | "country" | "building" | "apartment"
->;
-
-type AddressUpdate = Partial<AddressInput>;
+import type { Address, AddressInput, AddressUpdate } from "../../types/address";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const token = localStorage.getItem("token");
@@ -72,7 +49,6 @@ async function deleteAddress(id: string): Promise<Address> {
     return request<Address>(`/addresses/${id}`, { method: "DELETE" });
 }
 
-// Marks the address as the user's default. The server stores it on User.defaultAddressId.
 async function setDefaultAddress(id: string): Promise<Address> {
     return request<Address>(`/addresses/${id}/default`, { method: "PATCH" });
 }

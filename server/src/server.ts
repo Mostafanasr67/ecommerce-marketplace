@@ -10,6 +10,7 @@ import productRoutes from "./routes/product.routes.js";
 import cartRoutes from "./routes/cart.routes.js";
 import addressRoutes from "./routes/address.routes.js"; 
 import cardRoutes from "./routes/card.routes.js";
+import orderRoutes from "./routes/order.routes.js";
 
 
 import errorHandler from "./middleware/error.middleware.js";
@@ -31,6 +32,7 @@ app.use("/products", productRoutes);
 app.use("/cart", cartRoutes);
 app.use("/addresses", addressRoutes);
 app.use("/cards", cardRoutes);
+app.use("/orders", orderRoutes);
 app.use(errorHandler);
 
 
