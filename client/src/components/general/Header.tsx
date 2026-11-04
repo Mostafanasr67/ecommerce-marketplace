@@ -103,7 +103,7 @@ function Header({
 
 					{/* Customer actions */}
 					<div className="flex shrink-0 items-center gap-space-md">
-						<button type="button" className="relative hidden sm:flex sm:items-center sm:gap-1">
+						<Link to="/wishlist" type="button" className="relative hidden sm:flex sm:items-center sm:gap-1">
 							<span className="material-symbols-outlined text-xl">favorite</span>
 							<span className="text-label-md">Wishlist</span>
 							{wishlist.length > 0 && (
@@ -111,12 +111,12 @@ function Header({
 									{wishlist.length}
 								</span>
 							)}
-						</button>
+						</Link>
 
-						<button type="button" className="hidden sm:flex sm:items-center sm:gap-1">
+						<Link to="/profile" className="hidden sm:flex sm:items-center sm:gap-1">
 							<span className="material-symbols-outlined text-xl">person</span>
-							<span className="text-label-md">Account</span>
-						</button>
+							<span className="text-label-md">Profile</span>
+						</Link>
 
 						<Link to="/cart" className="relative flex items-center gap-1">
 							<span className="material-symbols-outlined text-xl">shopping_bag</span>

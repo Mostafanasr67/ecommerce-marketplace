@@ -1,6 +1,5 @@
 import ProfileHeader from "../components/profile/ProfileHeader";
 import PersonalInformation from "../components/profile/PersonalInformation";
-
 import ProfileSidebar from "../components/profile/ProfileSidebar";
 
 function ProfilePage() {

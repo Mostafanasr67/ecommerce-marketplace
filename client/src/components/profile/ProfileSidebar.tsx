@@ -34,25 +34,7 @@ function ProfileSidebar() {
 			icon: "favorite",
 			path: "wishlist",
 			badge: "3",
-		},
-		{
-			id: "communications",
-			label: "Communications",
-			icon: "notifications",
-			path: "communications",
-		},
-		{
-			id: "settings",
-			label: "Settings",
-			icon: "settings",
-			path: "settings",
-		},
-		{
-			id: "help",
-			label: "Help & Support",
-			icon: "help",
-			path: "help",
-		},
+		}
 	];
 
 	return (
@@ -98,27 +80,6 @@ function ProfileSidebar() {
 					))}
 				</div>
 			</nav>
-
-			{/* Account Tier Info Card */}
-			<div className="bg-gradient-to-br from-primary to-primary-container p-space-md rounded-2xl text-on-primary shadow-sm">
-				<div className="flex items-center gap-space-sm mb-space-md">
-					<span className="material-symbols-outlined text-2xl">verified</span>
-					<span className="font-headline-sm text-headline-sm font-bold">Tier 1 Member</span>
-				</div>
-				<p className="font-body-sm text-body-sm text-on-primary/90 mb-space-md">
-					You have access to exclusive benefits, priority support, and special offers.
-				</p>
-				<div className="flex items-center justify-between pt-space-md border-t border-on-primary/20">
-					<span className="font-label-sm text-label-sm">Member since Nov 2023</span>
-					<a
-						href="#upgrade"
-						className="font-label-sm text-label-sm font-bold hover:underline flex items-center gap-1"
-					>
-						<span>Learn more</span>
-						<span className="material-symbols-outlined text-xs">arrow_forward</span>
-					</a>
-				</div>
-			</div>
 		</aside>
 	);
 }

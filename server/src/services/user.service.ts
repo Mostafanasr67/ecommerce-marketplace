@@ -26,4 +26,16 @@ function getUserById(id: string) {
     });
 }
 
-export { getUserByEmail, createUser, getUserById };
+function updateUserProfile(id: string, data: {
+    name?: string | null;
+    phone?: string | null;
+    gender?: string | null;
+    dateOfBirth?: Date | null;
+}) {
+    return prisma.user.update({
+        where: { id },
+        data
+    });
+}
+
+export { getUserByEmail, createUser, getUserById, updateUserProfile };
