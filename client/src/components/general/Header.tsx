@@ -94,9 +94,10 @@ function Header({
 						/>
 						<button
 							type="button"
-							className="hidden shrink-0 rounded-md bg-primary px-space-lg py-space-sm font-label-md text-on-primary sm:block"
+							className="hidden shrink-0 ml-space-sm text-on-surface-variant hover:text-primary transition-colors sm:flex sm:items-center sm:justify-center"
+							title="Search"
 						>
-							Search
+							<span className="material-symbols-outlined text-xl">arrow_forward</span>
 						</button>
 					</div>
 
