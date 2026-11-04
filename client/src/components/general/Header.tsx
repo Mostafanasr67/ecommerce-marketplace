@@ -37,38 +37,6 @@ function Header({
 
 	return (
 		<header>
-			{/* Top announcement bar */}
-			<div className="h-9 bg-inverse-surface text-inverse-on-surface">
-				<div className="mx-auto flex h-full max-w-7xl items-center justify-between px-margin font-label-md text-label-md">
-					{/* Left side: store announcements */}
-					<div className="flex items-center gap-space-sm">
-						<span>
-							🚚 Free delivery on orders over 2000 EGP across Cairo & Giza
-						</span>
-						<span className="text-outline">|</span>
-						<span>🛡️ 100% Genuine Certified Sellers</span>
-						<span className="text-outline">|</span>
-						<span>24/7 Support: 19855</span>
-					</div>
-
-					{/* Right side: seller link and language */}
-					<div className="flex shrink-0 items-center gap-space-md">
-						<a href="#" className="transition-colors hover:text-primary-fixed">
-							Sell on Sovereign
-						</a>
-
-						<span className="text-outline">|</span>
-
-						<button
-							type="button"
-							className="transition-colors hover:text-primary-fixed"
-						>
-							🌐 العربية
-						</button>
-					</div>
-				</div>
-			</div>
-
 			{/* Main navigation row */}
 			<div className="border-b border-outline-variant bg-surface-container-lowest">
 				<div className="mx-auto flex max-w-7xl items-center gap-space-lg px-margin py-space-md">

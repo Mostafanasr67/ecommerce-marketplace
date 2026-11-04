@@ -184,6 +184,9 @@ async function getOrders() {
                 },
             },
         },
+        orderBy: {
+            createdAt: "desc",
+        },
     });
     if (orders.length === 0) {
         throw new Error("No orders found");

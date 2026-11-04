@@ -3,7 +3,7 @@ type OrderItem = {
     orderId: string;
     productId: string;
     quantity: number;
-    unitPrice: string;
+    unitPrice: string | number;
     product?: {
         id: string;
         name: string;
@@ -20,8 +20,8 @@ type SellerOrder = {
     id: string;
     orderId: string;
     sellerId: string;
-    status: string;
-    subTotal: string;
+    status: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+    subTotal: string | number;
     orderItems?: OrderItem[];
 };
 
@@ -44,8 +44,8 @@ type Payment = {
 type Order = {
     id: string;
     userId: string;
-    status: string;
-    totalAmount: string;
+    status: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+    totalAmount: string | number;
     fullname: string;
     phone: string;
     street: string;

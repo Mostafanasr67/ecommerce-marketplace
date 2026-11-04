@@ -108,7 +108,7 @@ function App() {
 					element={<ProfilePage />}
 				/>
 				<Route
-					path="/all-orders"
+					path="/orders"
 					element={<AllOrdersPage />}
 				/>
 			</Routes>

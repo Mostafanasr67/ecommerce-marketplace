@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { User, UpdateUserProfileInput } from "../../types/user";
 
@@ -6,7 +6,7 @@ const API_URL = "http://localhost:5000";
 
 async function fetchUserProfile(): Promise<User> {
 	const token = localStorage.getItem("token");
-	const response = await fetch(`${API_URL}/api/users/profile/me`, {
+	const response = await fetch(`${API_URL}/users/profile/me`, {
 		headers: {
 			Authorization: `Bearer ${token}`,
 		},
@@ -17,7 +17,7 @@ async function fetchUserProfile(): Promise<User> {
 
 async function updateUserProfile(data: UpdateUserProfileInput): Promise<User> {
 	const token = localStorage.getItem("token");
-	const response = await fetch(`${API_URL}/api/users/profile/update`, {
+	const response = await fetch(`${API_URL}/users/profile/update`, {
 		method: "PUT",
 		headers: {
 			"Content-Type": "application/json",
@@ -37,7 +37,7 @@ type FormData = {
 	gender: string;
 };
 
-function PersonalInformation() {
+const PersonalInformation = forwardRef(function PersonalInformation(_, ref) {
 	const [isEditing, setIsEditing] = useState(false);
 	const [formData, setFormData] = useState<FormData>({
 		fullName: "",
@@ -48,6 +48,10 @@ function PersonalInformation() {
 	});
 
 	const queryClient = useQueryClient();
+
+	useImperativeHandle(ref, () => ({
+		setEditing: (value: boolean) => setIsEditing(value),
+	}));
 
 	const { data: user } = useQuery({
 		queryKey: ["userProfile"],
@@ -75,7 +79,7 @@ function PersonalInformation() {
 	}, [user]);
 
 	const handleChange = (field: keyof FormData, value: string) => {
-		setFormData(prev => ({ ...prev, [field]: value }));
+		setFormData((prev) => ({ ...prev, [field]: value }));
 	};
 
 	const handleSubmit = (e: React.FormEvent) => {
@@ -94,12 +98,21 @@ function PersonalInformation() {
 				<h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">
 					Personal Information
 				</h2>
-				<p className="font-body-sm text-body-sm text-on-surface-variant">
-					Update your legal identity and national contact coordinates.
-				</p>
+				<button
+					onClick={!isEditing ? () => setIsEditing(true) : undefined}
+					disabled={updateMutation.isPending}
+					className="absolute top-space-lg right-space-lg text-on-surface-variant hover:text-primary transition-colors"
+					title="Edit Profile"
+					type="button"
+				>
+					<span className="material-symbols-outlined text-2xl">edit</span>
+				</button>
 			</div>
 
-			<form onSubmit={handleSubmit} className="md:grid md:grid-cols-2 gap-space-md flex flex-col gap-space-md">
+			<form
+				onSubmit={handleSubmit}
+				className="md:grid md:grid-cols-2 gap-space-md flex flex-col gap-space-md"
+			>
 				{/* Full Name */}
 				<div className="flex flex-col gap-1.5">
 					<label className="font-label-lg text-label-lg font-semibold text-on-surface">
@@ -135,6 +148,7 @@ function PersonalInformation() {
 							mail
 						</span>
 					</div>
+					
 				</div>
 
 				{/* Primary Phone */}
@@ -177,7 +191,9 @@ function PersonalInformation() {
 
 				{/* Gender */}
 				<div className="flex flex-col gap-1.5">
-					<label className="font-label-lg text-label-lg font-semibold text-on-surface">Gender</label>
+					<label className="font-label-lg text-label-lg font-semibold text-on-surface">
+						Gender
+					</label>
 					<div className="relative flex items-center">
 						<select
 							className="w-full h-11 px-space-md rounded-xl bg-surface-container-low font-body-sm text-body-sm text-on-surface focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium appearance-none"
@@ -207,18 +223,28 @@ function PersonalInformation() {
 							Cancel
 						</button>
 					)}
-					<button
-						className="h-11 px-space-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg font-bold rounded-xl shadow-md shadow-primary/20 hover:shadow-lg transition-all active:scale-[0.99] flex items-center gap-2"
-						type={isEditing ? "submit" : "button"}
-						onClick={() => !isEditing && setIsEditing(true)}
-						disabled={updateMutation.isPending}
-					>
-						<span>{isEditing ? (updateMutation.isPending ? "Saving..." : "Save Personal Changes") : "Edit Profile"}</span>
-					</button>
+					{isEditing && (
+						<button
+							className="h-11 px-space-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg font-bold rounded-xl shadow-md shadow-primary/20 hover:shadow-lg transition-all active:scale-[0.99] flex items-center gap-2"
+							type={isEditing ? "submit" : "button"}
+							onClick={() => !isEditing && setIsEditing(true)}
+							disabled={updateMutation.isPending}
+						>
+							<span>
+								{isEditing
+									? updateMutation.isPending
+										? "Saving..."
+										: "Save Personal Changes"
+									: "Edit Profile"}
+							</span>
+						</button>
+					)}
 				</div>
 			</form>
 		</div>
 	);
-}
+});
+
+PersonalInformation.displayName = "PersonalInformation";
 
 export default PersonalInformation;

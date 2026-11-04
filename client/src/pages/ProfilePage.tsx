@@ -3,6 +3,7 @@ import PersonalInformation from "../components/profile/PersonalInformation";
 import ProfileSidebar from "../components/profile/ProfileSidebar";
 
 function ProfilePage() {
+
 	return (
 		<main className="min-h-screen bg-surface">
 			<div className="mx-auto max-w-7xl px-margin py-space-xl">

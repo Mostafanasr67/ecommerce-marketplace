@@ -25,7 +25,7 @@ function PurchasedItems({order}: {order: Order}) {
 			items: (sellerOrder.orderItems ?? []).map((item) => ({
 				name: item.product?.name ?? `Product ${item.productId}`,
 				quantity: item.quantity,
-				price: item.unitPrice,
+				price: typeof item.unitPrice === "number" ? item.unitPrice.toString() : item.unitPrice,
 				image: item.product?.productImages?.[0]?.url ?? "",
 				sellerName: `Seller ${sellerOrder.sellerId}`,
 				sellerIcon: "factory" as const,
