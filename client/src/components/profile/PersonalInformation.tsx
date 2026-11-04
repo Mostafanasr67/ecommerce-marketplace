@@ -5,8 +5,8 @@ import type { User, UpdateUserProfileInput } from "../../types/user";
 const API_URL = "http://localhost:5000";
 
 async function fetchUserProfile(): Promise<User> {
-	const token = localStorage.getItem("auth_token");
-	const response = await fetch(`${API_URL}/users/profile/me`, {
+	const token = localStorage.getItem("token");
+	const response = await fetch(`${API_URL}/api/users/profile/me`, {
 		headers: {
 			Authorization: `Bearer ${token}`,
 		},
@@ -16,7 +16,7 @@ async function fetchUserProfile(): Promise<User> {
 }
 
 async function updateUserProfile(data: UpdateUserProfileInput): Promise<User> {
-	const token = localStorage.getItem("auth_token");
+	const token = localStorage.getItem("token");
 	const response = await fetch(`${API_URL}/api/users/profile/update`, {
 		method: "PUT",
 		headers: {
@@ -135,29 +135,15 @@ function PersonalInformation() {
 							mail
 						</span>
 					</div>
-					<button
-						className="h-11 px-space-md bg-surface-container-highest hover:bg-surface-variant text-on-surface font-label-lg text-label-lg font-semibold rounded-xl transition-colors shrink-0"
-						type="button"
-					>
-						Change Email
-					</button>
 				</div>
 
 				{/* Primary Phone */}
 				<div className="flex flex-col gap-1.5">
 					<div className="flex items-center justify-between">
 						<label className="font-label-lg text-label-lg font-semibold text-on-surface">
-							Primary Phone
+							Phone
 						</label>
-						<span className="font-label-sm text-label-sm text-emerald-700 font-bold flex items-center gap-1">
-							<span
-								className="material-symbols-outlined text-xs"
-								style={{ fontVariationSettings: "'FILL' 1" }}
-							>
-								verified
-							</span>
-							OTP Verified
-						</span>
+						
 					</div>
 					<div className="relative flex items-center">
 						<span className="absolute left-3 font-label-md text-label-md font-bold text-on-surface flex items-center gap-1 pointer-events-none">
