@@ -84,9 +84,7 @@ function Header({
 
 					{/* Search bar */}
 					<div className="flex min-w-0 flex-1 items-center rounded-lg bg-surface-container-low px-space-md">
-						<span className="mr-space-sm" aria-hidden="true">
-							🔍
-						</span>
+						<span className="material-symbols-outlined mr-space-sm text-on-surface-variant">search</span>
 						<input
 							type="search"
 							placeholder="Search products, brands, and sellers..."
@@ -104,9 +102,9 @@ function Header({
 
 					{/* Customer actions */}
 					<div className="flex shrink-0 items-center gap-space-md">
-						<button type="button" className="relative hidden sm:block">
-							<span className="text-xl">♡</span>
-							<span className="ml-space-xs text-label-md">Wishlist</span>
+						<button type="button" className="relative hidden sm:flex sm:items-center sm:gap-1">
+							<span className="material-symbols-outlined text-xl">favorite</span>
+							<span className="text-label-md">Wishlist</span>
 							{wishlist.length > 0 && (
 								<span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-error text-xs font-bold text-on-error">
 									{wishlist.length}
@@ -114,14 +112,14 @@ function Header({
 							)}
 						</button>
 
-						<button type="button" className="hidden sm:block">
-							👤
-							<span className="ml-space-xs text-label-md">Account</span>
+						<button type="button" className="hidden sm:flex sm:items-center sm:gap-1">
+							<span className="material-symbols-outlined text-xl">person</span>
+							<span className="text-label-md">Account</span>
 						</button>
 
-						<Link to="/cart" className="relative">
-							🛒
-							<span className="ml-space-xs text-label-md">Cart</span>
+						<Link to="/cart" className="relative flex items-center gap-1">
+							<span className="material-symbols-outlined text-xl">shopping_bag</span>
+							<span className="text-label-md">Cart</span>
 							{cartCount > 0 && (
 								<span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-error text-xs font-bold text-on-error">
 									{cartCount}
