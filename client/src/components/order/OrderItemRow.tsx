@@ -50,9 +50,9 @@ function OrderItemRow({ item, tone }: OrderItemRowProps) {
 			</div>
 
 			<div className="flex w-full items-center justify-between gap-space-sm text-right sm:w-auto sm:shrink-0 sm:flex-col sm:items-end sm:justify-between">
-				<span className="font-price-sm text-price-sm font-extrabold text-on-surface">{item.price}</span>
+				<span className="font-price-sm text-price-sm font-extrabold text-on-surface">{item.price} EGP</span>
 				{item.originalPrice && (
-					<span className="font-label-sm text-label-sm text-outline line-through">{item.originalPrice}</span>
+					<span className="font-label-sm text-label-sm text-outline line-through">{item.originalPrice} EGP</span>
 				)}
 			</div>
 		</div>

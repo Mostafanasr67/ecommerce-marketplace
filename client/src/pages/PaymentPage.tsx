@@ -55,6 +55,7 @@ function PaymentPage({ selectedAddress, paymentMethod, setPaymentMethod }: { sel
 							delivery={35}
 							selectedAddress={selectedAddress}
 							paymentMethod={paymentMethod}
+							selectedCard={selectedCard}
 						/>
 						<FulfillmentSchedule
 							itemCount={itemCount}

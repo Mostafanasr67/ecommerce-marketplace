@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createOrder } from "../order/OrderHelper";
 import type { Address } from "../address/AddressHelper";
+import type { SavedCard } from "../payment/CardHelper";
 
 type OrderSummaryProps = {
 	itemCount: number;
@@ -11,6 +12,7 @@ type OrderSummaryProps = {
 	delivery: number;
 	selectedAddress?: Address | null;
 	paymentMethod?: string;
+	selectedCard?: SavedCard | null;
 };
 
 const COUPONS = new Map<string, number>([["WELCOME50", 0.5]]);
@@ -27,6 +29,7 @@ function OrderSummary({
 	delivery,
 	selectedAddress = null,
 	paymentMethod,
+	selectedCard = null,
 }: OrderSummaryProps) {
 	const [couponInput, setCouponInput] = useState("");
 	const [appliedCode, setAppliedCode] = useState<string | null>(null);
@@ -57,9 +60,11 @@ function OrderSummary({
 
 	function handlePlaceOrder() {
 		if (!selectedAddress) return;
+		const method = paymentMethod === "COD" || paymentMethod === "cod" ? "COD" : "ONLINE";
 		placeOrderMutation.mutate({
 			addressId: selectedAddress.id,
-			paymentMethod: paymentMethod === "cod" ? "COD" : "ONLINE",
+			paymentMethod: method,
+			cardId: method === "ONLINE" && selectedCard ? selectedCard.id : undefined,
 		});
 	}
 

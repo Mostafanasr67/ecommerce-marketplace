@@ -3,43 +3,52 @@ import DispatchPackageStatus from "./DispatchPackageStatus";
 
 function SplitDispatchCard() {
 	return (
-		<section id="dispatch-timeline" className="flex h-full flex-col justify-between gap-space-md rounded-xl bg-surface-container-lowest p-space-lg shadow-sm">
-			<div className="flex flex-col gap-space-md">
-				<div className="flex items-center justify-between border-b border-surface-container pb-space-sm">
-					<div className="flex items-center gap-space-xs font-headline-sm text-headline-sm font-bold text-primary">
-						<OrderIcon name="route" className="h-6 w-6" />
-						<span>Split Dispatch Logic</span>
-					</div>
-					<span className="rounded bg-surface-container px-2 py-0.5 font-label-sm text-label-sm font-bold text-on-surface-variant">
-						2 PACKAGES
-					</span>
+		<section id="dispatch-timeline" className="flex flex-col gap-space-md rounded-xl bg-surface-container-lowest p-space-lg shadow-sm">
+			<div className="flex items-center justify-between border-b border-surface-container pb-space-sm">
+				<div className="flex items-center gap-space-xs font-headline-sm text-headline-sm font-bold text-primary">
+					<OrderIcon name="route" className="h-6 w-6" />
+					<span>Dispatch Package Status</span>
 				</div>
+			</div>
 
+			<div className="flex flex-col gap-space-lg">
 				<DispatchPackageStatus
 					icon="zap"
 					tone="primary"
-					title="Package 1 (Sovereign Express)"
-					trackingCode="SVX-CAI-99210"
+					title="Package"
+					trackingCode=""
 					etaLabel="Guaranteed:"
-					eta="Tomorrow by 2:00 PM"
+					eta="Within 2-3 Days"
 					progressWidth="w-2/3"
 					statusLabel="Preparing Hub"
 				/>
-				<DispatchPackageStatus
-					icon="factory"
-					tone="secondary"
-					title="Package 2 (Artisan Direct)"
-					trackingCode="CAL-ALX-48201"
-					etaLabel="Estimated:"
-					eta="Within 2–3 Business Days"
-					progressWidth="w-1/3"
-					statusLabel="At Workshop"
-				/>
-			</div>
 
-			<div className="flex items-center gap-2 font-label-sm text-label-sm text-outline">
-				<OrderIcon name="info" className="h-4 w-4" />
-				<span>Packages ship independently with zero extra customer charge.</span>
+				<div className="flex flex-col gap-space-md">
+					<h3 className="font-title-md text-title-md font-bold text-on-surface">Timeline</h3>
+					<div className="space-y-space-sm">
+						<div className="flex items-start gap-space-md">
+							<div className="mt-1.5 h-3 w-3 rounded-full bg-primary flex-shrink-0" />
+							<div>
+								<p className="font-label-lg text-label-lg font-bold text-on-surface">Order Confirmed</p>
+								<p className="font-label-md text-label-md text-on-surface-variant">Processing your order</p>
+							</div>
+						</div>
+						<div className="flex items-start gap-space-md">
+							<div className="mt-1.5 h-3 w-3 rounded-full bg-surface-container-high flex-shrink-0" />
+							<div>
+								<p className="font-label-lg text-label-lg font-bold text-on-surface">In Transit</p>
+								<p className="font-label-md text-label-md text-on-surface-variant">Your package is on the way</p>
+							</div>
+						</div>
+						<div className="flex items-start gap-space-md">
+							<div className="mt-1.5 h-3 w-3 rounded-full bg-surface-container-high flex-shrink-0" />
+							<div>
+								<p className="font-label-lg text-label-lg font-bold text-on-surface">Out for Delivery</p>
+								<p className="font-label-md text-label-md text-on-surface-variant">Package will arrive within 2-3 days</p>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		</section>
 	);

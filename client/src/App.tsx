@@ -13,13 +13,15 @@ import HomePage from "./pages/HomePage";
 import AddressPage from "./pages/AddressPage";
 import PaymentPage from "./pages/PaymentPage";
 import OrderPage from "./pages/OrderPage";
+import ProfilePage from "./pages/ProfilePage";
+import AllOrdersPage from "./pages/AllOrdersPage";
 
 function App() {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [categoryQuery, setCategoryQuery] = useState("");
 	const [wishlist, setWishlist] = useState<string[]>([]);
 	const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
-	const [paymentMethod, setPaymentMethod] = useState("card");
+	const [paymentMethod, setPaymentMethod] = useState("ONLINE");
 
 	const cartQuery = useQuery({
 		queryKey: ["cart"],
@@ -61,7 +63,6 @@ function App() {
 						/>
 					}
 				/>
-
 				<Route
 					path="/products"
 					element={
@@ -75,7 +76,6 @@ function App() {
 						</main>
 					}
 				/>
-
 				<Route
 					path="/products/:id"
 					element={
@@ -85,7 +85,6 @@ function App() {
 						/>
 					}
 				/>
-
 				<Route
 					path="/cart"
 					element={
@@ -103,6 +102,14 @@ function App() {
 				<Route
 					path="/place-order"
 					element={<OrderPage />}
+				/>
+				<Route
+					path="/profile"
+					element={<ProfilePage />}
+				/>
+				<Route
+					path="/all-orders"
+					element={<AllOrdersPage />}
 				/>
 			</Routes>
 

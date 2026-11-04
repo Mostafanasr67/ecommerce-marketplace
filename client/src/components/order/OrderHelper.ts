@@ -5,6 +5,7 @@ const API_URL = "http://localhost:5000";
 type CreateOrderInput = {
     addressId: string;
     paymentMethod: "COD" | "ONLINE";
+    cardId?: string;
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

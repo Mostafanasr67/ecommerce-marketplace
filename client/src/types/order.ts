@@ -4,6 +4,16 @@ type OrderItem = {
     productId: string;
     quantity: number;
     unitPrice: string;
+    product?: {
+        id: string;
+        name: string;
+        price: string | number;
+        productImages?: Array<{
+            id: string;
+            url: string;
+            altText: string;
+        }>;
+    };
 };
 
 type SellerOrder = {
@@ -18,9 +28,17 @@ type SellerOrder = {
 type Payment = {
     id: string;
     orderId: string;
-    method: string;
-    status: string;
-    amount: string;
+    method: "ONLINE" | "COD";
+    status: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+    amount: string | number;
+    card?: {
+        id: string;
+        holderName: string;
+        brand: string;
+        last4: string;
+        expiryMonth: number;
+        expiryYear: number;
+    } | null;
 };
 
 type Order = {

@@ -8,6 +8,7 @@ const DELIVERY_FEE = 35;
 type CreateOrderInput = {
     addressId?: unknown;
     paymentMethod?: unknown;
+    cardId?: unknown;
 };
 
 // Builds an order from the user's cart. The shipping address is copied into the order,
@@ -96,11 +97,33 @@ async function createOrder(userId: string, data: CreateOrderInput) {
                         method: paymentMethod,
                         status: paymentMethod === "ONLINE" ? PaymentStatus.PAID : PaymentStatus.PENDING,
                         amount: totalAmount,
+                        cardId: paymentMethod === "ONLINE" ? (typeof data.cardId === "string" ? data.cardId : null) : null,
                     },
                 },
             },
             include: {
-                sellerOrders: { include: { orderItems: true } },
+                sellerOrders: {
+                    include: {
+                        orderItems: {
+                            include: {
+                                product: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        price: true,
+                                        productImages: {
+                                            select: {
+                                                id: true,
+                                                url: true,
+                                                altText: true,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
                 payment: true,
             },
         });
@@ -122,7 +145,46 @@ async function createOrder(userId: string, data: CreateOrderInput) {
 }
 
 async function getOrders() {
-    const orders = await prisma.order.findMany();
+    const orders = await prisma.order.findMany({
+        include: {
+            sellerOrders: {
+                include: {
+                    orderItems: {
+                        include: {
+                            product: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    price: true,
+                                    productImages: {
+                                        select: {
+                                            id: true,
+                                            url: true,
+                                            altText: true,
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            payment: {
+                include: {
+                    card: {
+                        select: {
+                            id: true,
+                            holderName: true,
+                            brand: true,
+                            last4: true,
+                            expiryMonth: true,
+                            expiryYear: true,
+                        },
+                    },
+                },
+            },
+        },
+    });
     if (orders.length === 0) {
         throw new Error("No orders found");
     }
@@ -134,7 +196,45 @@ async function getOrderById(orderId: string) {
     const order = await prisma.order.findUnique({
         where: {
             id: orderId
-        }
+        },
+        include: {
+            sellerOrders: {
+                include: {
+                    orderItems: {
+                        include: {
+                            product: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    price: true,
+                                    productImages: {
+                                        select: {
+                                            id: true,
+                                            url: true,
+                                            altText: true,
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            payment: {
+                include: {
+                    card: {
+                        select: {
+                            id: true,
+                            holderName: true,
+                            brand: true,
+                            last4: true,
+                            expiryMonth: true,
+                            expiryYear: true,
+                        },
+                    },
+                },
+            },
+        },
     });
 
     if (!order) {

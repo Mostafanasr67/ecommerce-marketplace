@@ -17,20 +17,7 @@ function CartControls({
 					</h1>
 				</div>
 
-				<div className="flex items-center gap-space-xs rounded-full bg-surface-container-low px-space-md py-1.5 text-body-sm text-on-surface-variant">
-					<span className="text-primary" aria-hidden="true">
-						⌖
-					</span>
-					<span>
-						Delivering to:{" "}
-						<strong className="font-semibold text-on-surface">
-							New Cairo, Cairo
-						</strong>
-					</span>
-					<button type="button" className="ml-space-xs text-label-sm font-bold text-primary hover:underline">
-						Change
-					</button>
-				</div>
+				
 			</div>
 
 			<div className="flex flex-col gap-space-xs rounded-xl bg-surface-container-low p-space-md">
