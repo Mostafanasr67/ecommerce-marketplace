@@ -6,7 +6,7 @@ const API_URL = "http://localhost:5000";
 
 async function fetchUserProfile(): Promise<User> {
 	const token = localStorage.getItem("auth_token");
-	const response = await fetch(`${API_URL}/api/users/profile/me`, {
+	const response = await fetch(`${API_URL}/users/profile/me`, {
 		headers: {
 			Authorization: `Bearer ${token}`,
 		},
