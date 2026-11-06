@@ -5,9 +5,10 @@ type HeaderProps = {
 	searchQuery: string;
 	setSearchQuery: (query: string) => void;
 	categoryQuery: string;
-	setCategoryQuery: (query: string) => void;
+	onCategorySelect: (categoryId: string) => void;
 	wishlist: string[];
 	cartCount: number;
+	onLogout: () => void;
 };
 
 type category = {
@@ -19,9 +20,10 @@ function Header({
 	searchQuery,
 	setSearchQuery,
 	categoryQuery,
-	setCategoryQuery,
+	onCategorySelect,
 	wishlist,
 	cartCount,
+	onLogout,
 }: HeaderProps) {
 	const [categories, setCategories] = useState<category[]>([]);
 
@@ -41,13 +43,15 @@ function Header({
 			<div className="border-b border-outline-variant bg-surface-container-lowest">
 				<div className="mx-auto flex max-w-7xl items-center gap-space-lg px-margin py-space-md">
 					{/* Logo */}
-					<Link to="/" className="shrink-0">
-						<span className="font-headline-lg font-bold tracking-tight">
-							SOVEREIGN
-						</span>
-						<span className="block text-label-sm text-on-surface-variant">
-							THE MARKETPLACE
-						</span>
+					<Link to="/home" className="shrink-0 flex items-center gap-space-md hover:opacity-80 transition-opacity">
+						<div>
+							<span className="font-headline-md font-bold tracking-tight block">
+								SOVEREIGN
+							</span>
+							<span className="text-label-xs text-on-surface-variant block">
+								THE MARKETPLACE
+							</span>
+						</div>
 					</Link>
 
 					{/* Search bar */}
@@ -95,6 +99,15 @@ function Header({
 								</span>
 							)}
 						</Link>
+
+						<button
+							type="button"
+							onClick={onLogout}
+							className="flex items-center gap-1"
+						>
+							<span className="material-symbols-outlined text-xl">logout</span>
+							<span className="text-label-md">Logout</span>
+						</button>
 					</div>
 				</div>
 			</div>
@@ -103,7 +116,7 @@ function Header({
 			<nav className="border-b border-outline-variant bg-surface-container-lowest">
 				<div className="mx-auto flex max-w-7xl items-center gap-space-lg overflow-x-auto px-margin py-space-md">
 					<Link
-						to="#featured-catalog"
+						to="/products"
 						className={`shrink-0 text-title-sm ${
 							categoryQuery === ""
 								? "text-primary font-bold text-lg"
@@ -111,12 +124,7 @@ function Header({
 						}`}
 						onClick={(e) => {
 							e.preventDefault();
-							setCategoryQuery("");
-							setTimeout(() => {
-								document
-									.getElementById("featured-catalog")
-									?.scrollIntoView({ behavior: "smooth" });
-							}, 100);
+							onCategorySelect("");
 						}}
 					>
 						All Categories
@@ -125,7 +133,7 @@ function Header({
 					{categories.map((category) => (
 						<Link
 							key={category.id}
-							to="#featured-catalog"
+							to="/products"
 							className={`shrink-0 text-title-sm ${
 								categoryQuery === category.id
 									? "text-primary font-bold text-lg"
@@ -133,19 +141,14 @@ function Header({
 							}`}
 							onClick={(e) => {
 								e.preventDefault();
-								setCategoryQuery(category.id);
-								setTimeout(() => {
-									document
-										.getElementById("featured-catalog")
-										?.scrollIntoView({ behavior: "smooth" });
-								}, 100);
+								onCategorySelect(category.id);
 							}}
 						>
 							{category.name}{" "}
 						</Link>
 					))}
 					<Link
-						to="#featured-catalog"
+						to="/products"
 						className={`shrink-0 text-title-sm ${
 							categoryQuery === "Deals"
 								? "text-primary font-bold text-lg"
@@ -153,12 +156,7 @@ function Header({
 						}`}
 						onClick={(e) => {
 							e.preventDefault();
-							setCategoryQuery("Deals");
-							setTimeout(() => {
-								document
-									.getElementById("featured-catalog")
-									?.scrollIntoView({ behavior: "smooth" });
-							}, 100);
+							onCategorySelect("Deals");
 						}}
 					>
 						Deals

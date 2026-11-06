@@ -25,7 +25,10 @@ async function updateUserProfile(data: UpdateUserProfileInput): Promise<User> {
 		},
 		body: JSON.stringify(data),
 	});
-	if (!response.ok) throw new Error("Failed to update profile");
+	if (!response.ok) {
+		const body = await response.json().catch(() => null);
+		throw new Error(body?.message ?? body?.error ?? "Failed to update profile");
+	}
 	return response.json();
 }
 
@@ -66,6 +69,20 @@ const PersonalInformation = forwardRef(function PersonalInformation(_, ref) {
 		},
 	});
 
+	const cancelEditing = () => {
+		if (user) {
+			setFormData({
+				fullName: user.name || "",
+				email: user.email || "",
+				primaryPhone: user.phone || "",
+				dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split("T")[0] : "",
+				gender: user.gender || "",
+			});
+		}
+		setIsEditing(false);
+		updateMutation.reset();
+	};
+
 	useEffect(() => {
 		if (user) {
 			setFormData({
@@ -94,15 +111,16 @@ const PersonalInformation = forwardRef(function PersonalInformation(_, ref) {
 
 	return (
 		<div className="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm flex flex-col gap-space-lg">
-			<div>
+			<div className="flex items-center justify-between gap-space-md">
 				<h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">
 					Personal Information
 				</h2>
 				<button
-					onClick={!isEditing ? () => setIsEditing(true) : undefined}
+					onClick={() => setIsEditing(true)}
 					disabled={updateMutation.isPending}
-					className="absolute top-space-lg right-space-lg text-on-surface-variant hover:text-primary transition-colors"
-					title="Edit Profile"
+					className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+					title="Edit personal information"
+					aria-label="Edit personal information"
 					type="button"
 				>
 					<span className="material-symbols-outlined text-2xl">edit</span>
@@ -214,11 +232,17 @@ const PersonalInformation = forwardRef(function PersonalInformation(_, ref) {
 
 				{/* Action Footer */}
 				<div className="md:col-span-2 pt-space-sm flex items-center justify-end border-t-0 mt-space-sm gap-space-sm">
+					{updateMutation.isError && (
+						<p role="alert" className="mr-auto text-body-sm text-error">
+							{updateMutation.error.message}
+						</p>
+					)}
 					{isEditing && (
 						<button
 							className="h-11 px-space-xl bg-surface-container-highest hover:bg-surface-variant text-on-surface font-label-lg text-label-lg font-bold rounded-xl transition-colors"
 							type="button"
-							onClick={() => setIsEditing(false)}
+							onClick={cancelEditing}
+							disabled={updateMutation.isPending}
 						>
 							Cancel
 						</button>

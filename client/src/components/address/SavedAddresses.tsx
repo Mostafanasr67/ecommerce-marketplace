@@ -7,6 +7,7 @@ import {
 	setDefaultAddress,
 	type Address,
 } from "./AddressHelper";
+import { getCurrentUserId } from "../../utils/currentUser";
 
 type SavedAddressesProps = {
 	onEdit?: (address: Address) => void;
@@ -16,7 +17,12 @@ type SavedAddressesProps = {
 
 function SavedAddresses({ onEdit, selectedAddress, setSelectedAddress }: SavedAddressesProps) {
 	const queryClient = useQueryClient();
-	const addressQuery = useQuery({ queryKey: ["addresses"], queryFn: fetchAddresses });
+	const userId = getCurrentUserId();
+	const addressQuery = useQuery({
+		queryKey: ["addresses", userId],
+		queryFn: fetchAddresses,
+		enabled: userId !== null,
+	});
 	const addresses: Address[] = useMemo(() => addressQuery.data?.addresses ?? [], [addressQuery.data]);
 	const defaultAddressId = addressQuery.data?.defaultAddressId ?? null;
 

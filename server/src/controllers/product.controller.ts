@@ -8,6 +8,8 @@ async function getAllProducts(req: Request, res: Response) {
     const pageQuery = req.query.page || 1;
     const search = req.query.search;
     const categoryId = req.query.categoryId;
+    const categoryIdsQuery = req.query.categoryIds;
+    const excludeProductIdsQuery = req.query.excludeProductIds;
     const sellerId = req.query.sellerId;
     const sortBy = req.query.sortBy;
     const sortOrder = req.query.sortOrder;
@@ -22,18 +24,18 @@ async function getAllProducts(req: Request, res: Response) {
         return;
     }
 
-    if (search !== undefined && typeof search !== "string" || categoryId !== undefined && typeof categoryId !== "string" || sellerId !== undefined && typeof sellerId !== "string") {
-        res.status(400).json({ error: "Search, categoryId, and sellerId must be strings" });
+    if (search !== undefined && typeof search !== "string" || categoryId !== undefined && typeof categoryId !== "string" || categoryIdsQuery !== undefined && typeof categoryIdsQuery !== "string" || excludeProductIdsQuery !== undefined && typeof excludeProductIdsQuery !== "string" || sellerId !== undefined && typeof sellerId !== "string") {
+        res.status(400).json({ error: "Search, categoryId, categoryIds, excludeProductIds, and sellerId must be strings" });
         return;
     }
 
     if (sortBy !== undefined && typeof sortBy !== "string") {
-        res.status(400).json({ error: "sortBy must be 'name' or 'price'" });
+        res.status(400).json({ error: "sortBy must be 'name', 'price', or 'createdAt'" });
         return;
     }
 
-    if (sortBy !== undefined && sortBy !== "name" && sortBy !== "price") {
-        res.status(400).json({ error: "sortBy must be 'name' or 'price'" });
+    if (sortBy !== undefined && sortBy !== "name" && sortBy !== "price" && sortBy !== "createdAt") {
+        res.status(400).json({ error: "sortBy must be 'name', 'price', or 'createdAt'" });
         return;
     }
 
@@ -47,9 +49,22 @@ async function getAllProducts(req: Request, res: Response) {
         return;
     }
 
+    const categoryIds = typeof categoryIdsQuery === "string"
+        ? [...new Set(categoryIdsQuery.split(",").map((id) => id.trim()).filter(Boolean))]
+        : undefined;
+    const excludeProductIds = typeof excludeProductIdsQuery === "string"
+        ? [...new Set(excludeProductIdsQuery.split(",").map((id) => id.trim()).filter(Boolean))]
+        : undefined;
+    if (categoryIdsQuery !== undefined && categoryIds?.length === 0) {
+        res.status(400).json({ error: "categoryIds must include at least one category ID" });
+        return;
+    }
+
     const filters: ProductFilters = {
         ...(search ? { search } : {}),
         ...(categoryId ? { categoryId } : {}),
+        ...(categoryIds ? { categoryIds } : {}),
+        ...(excludeProductIds ? { excludeProductIds } : {}),
         ...(sellerId ? { sellerId } : {}),
         ...(sortBy ? { sortBy } : {}),
         ...(sortOrder ? { sortOrder } : {}),

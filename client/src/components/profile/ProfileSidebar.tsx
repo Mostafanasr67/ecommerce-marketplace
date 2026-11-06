@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 
-function ProfileSidebar() {
+function ProfileSidebar({ wishlist }: { wishlist: string[] }) {
 	const location = useLocation();
 
 	const navigationItems = [
@@ -23,7 +23,7 @@ function ProfileSidebar() {
 			label: "Wishlist",
 			icon: "favorite",
 			path: "/wishlist",
-			badge: "3",
+			badge: wishlist.length > 0 ? wishlist.length : null,
 		}
 	];
 

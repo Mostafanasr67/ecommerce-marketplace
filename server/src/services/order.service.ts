@@ -144,8 +144,15 @@ async function createOrder(userId: string, data: CreateOrderInput) {
     });
 }
 
-async function getOrders() {
+async function getOrders(userId: string) {
+    if (!userId) {
+        throw new AppError("User ID is required to fetch orders", 401);
+    }
+
     const orders = await prisma.order.findMany({
+        where: {
+            userId
+        },
         include: {
             sellerOrders: {
                 include: {
@@ -188,17 +195,19 @@ async function getOrders() {
             createdAt: "desc",
         },
     });
-    if (orders.length === 0) {
-        throw new Error("No orders found");
-    }
     return orders;
 }
 
 
-async function getOrderById(orderId: string) {
-    const order = await prisma.order.findUnique({
+async function getOrderById(orderId: string, userId: string) {
+    if (!userId) {
+        throw new AppError("User ID is required to fetch an order", 401);
+    }
+
+    const order = await prisma.order.findFirst({
         where: {
-            id: orderId
+            id: orderId,
+            userId,
         },
         include: {
             sellerOrders: {
@@ -241,7 +250,7 @@ async function getOrderById(orderId: string) {
     });
 
     if (!order) {
-        throw new Error("Order not found");
+        throw new AppError("Order not found", 404);
     }
     return order;
 }

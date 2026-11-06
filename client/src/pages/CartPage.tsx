@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import cartPackages from "../data/cart";
+import CartPackages from "../data/cart";
 import CartControls from "../components/cart/CartControls";
 import CartPackage from "../components/cart/CartPackage";
 import CheckoutProgress from "../components/cart/CheckoutProgress";
@@ -11,6 +11,7 @@ import {
 	fetchCartItems,
 	updateCartItemQuantity,
 	removeCartItem,
+	addCartItem,
 } from "../components/cart/CartHelper";
 
 function CartPage({
@@ -43,6 +44,11 @@ function CartPage({
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart"] }),
 	});
 
+	const addItemMutation = useMutation({
+		mutationFn: (productId: string) => addCartItem(productId, 1),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart"] }),
+	});
+
 	const subtotal = items.reduce(
 		(total, item) => total + item.product.price * item.quantity,
 		0,
@@ -70,7 +76,12 @@ function CartPage({
 		removeItemMutation.mutate(item.productId);
 	}
 
-	const packages = cartPackages
+	async function addRecommendedItem(productId: string) {
+		if (items.some((item) => item.productId === productId)) return;
+		await addItemMutation.mutateAsync(productId);
+	}
+
+	const packages: (typeof CartPackages[number] & { items: typeof items })[] = CartPackages
 		.map((packageData) => ({
 			...packageData,
 			items: items.filter((item) => item.packageId === packageData.id),
@@ -115,7 +126,9 @@ function CartPage({
 							</div>
 						)}
 
-						{items?.length > 0 && <CartRecommendations />}
+						{items.length > 0 && (
+							<CartRecommendations items={items} onAdd={addRecommendedItem} />
+						)}
 					</section>
 
 					<div className="col-span-12 flex flex-col gap-space-lg lg:sticky lg:top-6 lg:col-span-4 lg:self-start">

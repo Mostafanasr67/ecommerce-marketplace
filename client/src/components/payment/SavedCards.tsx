@@ -7,6 +7,7 @@ import {
 	setDefaultCard,
 	type SavedCard,
 } from "./CardHelper";
+import { getCurrentUserId } from "../../utils/currentUser";
 
 type SavedCardsProps = {
 	selectedCard: SavedCard | null;
@@ -15,7 +16,12 @@ type SavedCardsProps = {
 
 function SavedCards({ selectedCard, setSelectedCard }: SavedCardsProps) {
 	const queryClient = useQueryClient();
-	const cardQuery = useQuery({ queryKey: ["cards"], queryFn: fetchCards });
+	const userId = getCurrentUserId();
+	const cardQuery = useQuery({
+		queryKey: ["cards", userId],
+		queryFn: fetchCards,
+		enabled: userId !== null,
+	});
 	const cards: SavedCard[] = useMemo(() => cardQuery.data?.cards ?? [], [cardQuery.data]);
 	const defaultCardId = cardQuery.data?.defaultCardId ?? null;
 

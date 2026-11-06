@@ -4,15 +4,24 @@ import AppError from "../utils/appError.js";
 interface ProductFilters {
     search?: string;
     categoryId?: string;
+    categoryIds?: string[];
+    excludeProductIds?: string[];
     sellerId?: string;
-    sortBy?: "name" | "price";
+    sortBy?: "name" | "price" | "createdAt";
     sortOrder?: "asc" | "desc";
 }
 
 async function getAllProducts(limit: number, page: number, filters: ProductFilters) {
     const where = {
         ...(filters.search ? { name: { contains: filters.search, mode: "insensitive" as const } } : {}),
-        ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
+        ...(filters.categoryIds?.length
+            ? { categoryId: { in: filters.categoryIds } }
+            : filters.categoryId
+                ? { categoryId: filters.categoryId }
+                : {}),
+        ...(filters.excludeProductIds?.length
+            ? { id: { notIn: filters.excludeProductIds } }
+            : {}),
         ...(filters.sellerId ? { sellerId: filters.sellerId } : {})
     };
 
@@ -22,6 +31,10 @@ async function getAllProducts(limit: number, page: number, filters: ProductFilte
             skip: (page - 1) * limit,
             where,
             ...(filters.sortBy ? { orderBy: { [filters.sortBy]: filters.sortOrder || "asc" } } : {}),
+            include: {
+                seller: { select: { storeName: true } },
+                productImages: { orderBy: { sortOrder: "asc" } },
+            },
         }),
         prisma.product.count({
             where

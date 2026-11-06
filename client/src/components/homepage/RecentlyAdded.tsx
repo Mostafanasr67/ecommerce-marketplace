@@ -1,48 +1,31 @@
 import ProductCard from "../products/ProductCard";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import type { Product } from "../../types/cart";
 
-const recentProducts = [
-	{
-		id: "16bac0af-eca6-4c74-a6ba-331b5d5878f0",
-		name: "Premium Everyday Backpack",
-		image:
-			"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80",
-		price: 1599,
-		rating: 4.7,
-		seller: "Urban Carry",
-		badge: "Just Added",
-	},
-	{
-		id: "708dedc5-4453-433b-9e7e-80bfbbcbe98a",
-		name: "Minimal Ceramic Coffee Set",
-		image:
-			"https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?auto=format&fit=crop&w=600&q=80",
-		price: 749,
-		rating: 4.6,
-		seller: "Cairo Crafts",
-		badge: "New Arrival",
-	},
-	{
-		id: "941d170b-d275-472f-9b22-370fb77454a9",
-		name: "Wireless Portable Speaker",
-		image:
-			"https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&w=600&q=80",
-		price: 2199,
-		oldPrice: 2699,
-		rating: 4.8,
-		seller: "Tech Haven",
-		badge: "Just Added",
-	},
-	{
-		id: "d1ed711c-9429-455d-a035-9fb64e2588bf",
-		name: "Classic Leather Wallet",
-		image:
-			"https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=600&q=80",
-		price: 599,
-		rating: 4.5,
-		seller: "Leather House",
-		badge: "New Arrival",
-	},
-];
+function useRecentProducts() {
+	const [recentProducts, setRecentProducts] = useState<Product[]>([]);
+	const [error, setError] = useState<string | null>(null);
+
+	useEffect(() => {
+		fetch("http://localhost:5000/products?limit=4&page=1&sortBy=createdAt&sortOrder=desc")
+			.then((res) => {
+				if (!res.ok) {
+					throw new Error(`Failed to load recent products (${res.status})`);
+				}
+				return res.json();
+			})
+			.then((data) => {
+				setRecentProducts(data.products ?? []);
+			})
+			.catch((fetchError: unknown) => {
+				console.error("Failed to load recently added products:", fetchError);
+				setError("Recently added products could not be loaded.");
+			});
+	}, []);
+
+	return { recentProducts, error };
+}
 
 type RecentlyAddedProps = {
 	wishlist: string[];
@@ -50,6 +33,7 @@ type RecentlyAddedProps = {
 };
 
 function RecentlyAdded({ wishlist, toggleWishlist }: RecentlyAddedProps) {
+	const { recentProducts, error } = useRecentProducts();
 	return (
 		<section className="mx-auto w-full max-w-7xl px-margin py-space-xl">
 			<div className="mb-space-lg flex items-end justify-between gap-space-md">
@@ -67,19 +51,28 @@ function RecentlyAdded({ wishlist, toggleWishlist }: RecentlyAddedProps) {
 					</p>
 				</div>
 
-				<a
-					href="#"
+				<Link
+					to="/products"
 					className="shrink-0 text-label-md font-semibold text-primary hover:underline"
 				>
 					View all →
-				</a>
+				</Link>
 			</div>
 
 			<div className="grid grid-cols-2 gap-space-md lg:grid-cols-4">
+				{error && (
+					<p role="alert" className="col-span-full text-center text-body-md text-error">
+						{error}
+					</p>
+				)}
 				{recentProducts.map((product) => (
 					<ProductCard
 						key={product.id}
-						{...product}
+						id={product.id}
+						name={product.name}
+						image={product.productImages?.[0]?.url}
+						price={product.price}
+						seller={product.seller?.storeName ?? "Marketplace"}
 						wishlist={wishlist}
 						toggleWishlist={toggleWishlist}
 					/>

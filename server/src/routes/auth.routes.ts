@@ -17,13 +17,14 @@ router.get(
     session: false,
   }),
   (req, res) => {
-
     const token = createToken((req.user as any).id);
-    res.json({
-      message: "Google authentication successful",
-      user: req.user,
-      token,
-    });
+    const user = req.user as any;
+    
+    const redirectUrl = new URL("http://localhost:5173");
+    redirectUrl.searchParams.append("token", token);
+    redirectUrl.searchParams.append("user", JSON.stringify(user));
+    
+    res.redirect(redirectUrl.toString());
   }
 );
 

@@ -8,18 +8,18 @@ function HomePage({
 	categoryQuery,
 	wishlist,
 	toggleWishlist,
-	setCategoryQuery,
+	onCategorySelect,
 }: {
 	searchQuery: string;
 	categoryQuery: string;
 	wishlist: string[];
 	toggleWishlist: (productId: string) => void;
-	setCategoryQuery: (category: string) => void;
+	onCategorySelect: (categoryId: string) => void;
 }) {
 	return (
 		<main className="min-h-screen bg-surface">
 							<Hero />
-							<Categories setCategoryQuery={setCategoryQuery} />
+							<Categories onCategorySelect={onCategorySelect} />
 							<FeaturedProducts
 								searchQuery={searchQuery}
 								categoryQuery={categoryQuery}

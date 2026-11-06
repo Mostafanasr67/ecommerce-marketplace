@@ -11,6 +11,7 @@ import cartRoutes from "./routes/cart.routes.js";
 import addressRoutes from "./routes/address.routes.js"; 
 import cardRoutes from "./routes/card.routes.js";
 import orderRoutes from "./routes/order.routes.js";
+import wishlistRoutes from "./routes/wishlist.routes.js";
 
 
 import errorHandler from "./middleware/error.middleware.js";
@@ -30,6 +31,7 @@ app.use("/users", userRoutes);
 app.use("/auth", authRoutes);
 app.use("/products", productRoutes);
 app.use("/cart", cartRoutes);
+app.use("/wishlist", wishlistRoutes);
 app.use("/addresses", addressRoutes);
 app.use("/cards", cardRoutes);
 app.use("/orders", orderRoutes);

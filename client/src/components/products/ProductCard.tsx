@@ -3,11 +3,11 @@ import { Link } from "react-router-dom";
 type ProductCardProps = {
 	id: string;
 	name: string;
-	image: string;
+	image?: string;
 	price: number;
 	oldPrice?: number;
 	rating?: number;
-	seller: string;
+	seller: string | { storeName: string };
 	badge?: string;
 	wishlist: string[];
 	toggleWishlist: (productId: string) => void;
@@ -25,15 +25,25 @@ function ProductCard({
 	wishlist,
 	toggleWishlist,
 }: ProductCardProps) {
+	const sellerName = typeof seller === "string" ? seller : seller.storeName;
+
 	return (
 		<article className="group overflow-hidden rounded-xl bg-surface-container-lowest shadow-sm transition-shadow hover:shadow-md">
 			<div className="relative aspect-square overflow-hidden bg-surface-container-low">
 				<Link to={`/products/${id}`} className="absolute inset-0 z-10">
-					<img
-						src={image}
-						alt={name}
-						className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-					/>
+					{image ? (
+						<img
+							src={image}
+							alt={name}
+							className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+						/>
+					) : (
+						<span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10">
+							<span className="material-symbols-outlined text-7xl text-primary/50">
+								image
+							</span>
+						</span>
+					)}
 				</Link>
 
 				{badge && (
@@ -58,7 +68,7 @@ function ProductCard({
 
 			<div className="p-space-md">
 				<p className="mb-space-xs text-label-sm text-on-surface-variant">
-					{seller}
+					{sellerName}
 				</p>
 
 				<h3 className="mb-space-sm line-clamp-2 min-h-12 text-title-md font-semibold text-on-surface">

@@ -1,36 +1,39 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import ProfileSidebar from "../components/profile/ProfileSidebar";
 import OrdersHeader from "../components/orders/OrdersHeader";
 import OrdersFilter from "../components/orders/OrdersFilter";
 import OrdersList from "../components/orders/OrdersList";
-import type {Order} from "../types/order";
+import { fetchOrders } from "../components/order/OrderHelper";
+import type { Order } from "../types/order";
 
-
-function AllOrdersPage() {
+function AllOrdersPage({ wishlist }: { wishlist: string[] }) {
 	const [selectedStatus, setSelectedStatus] = useState("ALL");
 	const [orders, setOrders] = useState<Order[]>([]);
+	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		fetchOrders().then((orders) => {
-			// Handle the fetched orders here
-			setOrders(orders);
-		});
-	}, []);
+		let cancelled = false;
+		fetchOrders()
+			.then((fetchedOrders) => {
+				if (!cancelled) {
+					setOrders(fetchedOrders);
+					setError(null);
+				}
+			})
+			.catch((fetchError: unknown) => {
+				if (!cancelled) {
+					setError(
+						fetchError instanceof Error
+							? fetchError.message
+							: "Failed to fetch orders",
+					);
+				}
+			});
 
-	async function fetchOrders(): Promise<Order[]> {
-		const token = localStorage.getItem("token");
-		const response = await fetch("http://localhost:5000/orders", 
-			{
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-					"Authorization": `Bearer ${token}`,
-				},
-			}
-		);
-		const data = await response.json();
-		return data;
-	}
+		return () => {
+			cancelled = true;
+		};
+	}, []);
 
 	const filteredOrders = selectedStatus === "ALL"
 		? orders
@@ -41,7 +44,7 @@ function AllOrdersPage() {
 			<div className="mx-auto max-w-7xl px-margin py-space-xl">
 				<div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
 					<aside className="lg:col-span-3">
-						<ProfileSidebar />
+						<ProfileSidebar wishlist={wishlist} />
 					</aside>
 
 					<section className="lg:col-span-9 flex flex-col gap-space-lg">
@@ -50,7 +53,13 @@ function AllOrdersPage() {
 							selectedStatus={selectedStatus}
 							onStatusChange={setSelectedStatus}
 						/>
-						<OrdersList orders={filteredOrders} />
+						{error ? (
+							<p role="alert" className="rounded-xl bg-error-container p-space-lg text-on-error-container">
+								{error}
+							</p>
+						) : (
+							<OrdersList orders={filteredOrders} />
+						)}
 					</section>
 				</div>
 			</div>

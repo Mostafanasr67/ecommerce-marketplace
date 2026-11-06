@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 type Category = {
 	id: string;
@@ -8,11 +7,10 @@ type Category = {
 };
 
 interface CategoriesProps {
-	setCategoryQuery: (query: string) => void;
+	onCategorySelect: (categoryId: string) => void;
 }
 
-function Categories({ setCategoryQuery }: CategoriesProps) {
-	const navigate = useNavigate();
+function Categories({ onCategorySelect }: CategoriesProps) {
 	const [categories, setCategories] = useState<Category[]>([]);
 
 	useEffect(() => {
@@ -41,11 +39,10 @@ function Categories({ setCategoryQuery }: CategoriesProps) {
 				</div>
 
 				<Link
-					to="#featured-catalog"
+					to="/home"
           onClick={(e)=>{
             e.preventDefault();
-            setCategoryQuery("");
-            navigate("/products");
+            onCategorySelect("");
           }}
 					className="text-label-md font-semibold text-primary hover:underline"
 				>
@@ -57,12 +54,10 @@ function Categories({ setCategoryQuery }: CategoriesProps) {
 				{categories.map((category) => (
 					<Link
 						key={category.name}
-						to="#featured-catalog"
+						to="/home"
 						onClick={(e) => {
 							e.preventDefault();
-							setCategoryQuery(category.id);
-							// Scroll to featured products section
-							navigate("/products");
+							onCategorySelect(category.id);
 						}}
 						className="group overflow-hidden rounded-xl bg-surface-container-low transition-transform hover:-translate-y-1"
 					>

@@ -1,3 +1,12 @@
+// Mirrors the Prisma `Seller` model (server/prisma/schema.prisma).
+export type Seller = {
+	id: string;
+	userId: string;
+	storeName: string;
+	createdAt: string;
+	updatedAt: string;
+};
+
 // Mirrors the Prisma `Product` model (server/prisma/schema.prisma).
 export type Product = {
 	id: string;
@@ -9,6 +18,16 @@ export type Product = {
 	stock: number;
 	createdAt: string;
 	updatedAt: string;
+	seller?: Seller;
+	productImages?: {
+		id: string;
+		productId: string;
+		url: string;
+		altText: string;
+		sortOrder: number;
+		createdAt: string;
+		updatedAt: string;
+	}[];
 };
 
 // Mirrors the Prisma `CartItem` model.
