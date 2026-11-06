@@ -16,6 +16,7 @@ import wishlistRoutes from "./routes/wishlist.routes.js";
 
 import errorHandler from "./middleware/error.middleware.js";
 import logger from "./middleware/logger.middleware.js";
+import sellerRoutes from "./routes/seller.routes.js";
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use("/wishlist", wishlistRoutes);
 app.use("/addresses", addressRoutes);
 app.use("/cards", cardRoutes);
 app.use("/orders", orderRoutes);
+app.use("/seller", sellerRoutes);
 app.use(errorHandler);
 
 

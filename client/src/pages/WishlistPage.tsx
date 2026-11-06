@@ -1,6 +1,6 @@
-import ProfileSidebar from "../components/profile/ProfileSidebar";
+import ProfileSidebar from "../components/user/profile/ProfileSidebar";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchWishlist, removeFromWishlist } from "../components/product/ProductHelper";
+import { fetchWishlist, removeFromWishlist } from "../components/user/product/ProductHelper";
 
 function WishlistPage({ wishlist }: { wishlist: string[]; toggleWishlist?: (productId: string) => void; }) {
 	const queryClient = useQueryClient();

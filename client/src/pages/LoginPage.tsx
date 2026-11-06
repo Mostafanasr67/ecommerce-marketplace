@@ -1,6 +1,6 @@
 import { useState } from "react";
-import GoogleAuthButton from "../components/login/GoogleAuthButton";
-import LoginFooter from "../components/login/LoginFooter";
+import GoogleAuthButton from "../components/user/login/GoogleAuthButton";
+import LoginFooter from "../components/user/login/LoginFooter";
 
 function LoginPage() {
 	const [isLoading, setIsLoading] = useState(false);

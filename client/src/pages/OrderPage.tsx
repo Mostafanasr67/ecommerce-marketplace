@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import CheckoutProgress from "../components/cart/CheckoutProgress";
-import DeliveryHandoverCard from "../components/order/DeliveryHandoverCard";
-import OrderActions from "../components/order/OrderActions";
-import OrderConfirmationHeader from "../components/order/OrderConfirmationHeader";
-import { fetchOrders, type Order } from "../components/order/OrderHelper";
-import OrderPaymentCard from "../components/order/OrderPaymentCard";
-import PurchasedItems from "../components/order/PurchasedItems";
-import SplitDispatchCard from "../components/order/SplitDispatchCard";
+import CheckoutProgress from "../components/user/cart/CheckoutProgress";
+import DeliveryHandoverCard from "../components/user/order/DeliveryHandoverCard";
+import OrderActions from "../components/user/order/OrderActions";
+import OrderConfirmationHeader from "../components/user/order/OrderConfirmationHeader";
+import { fetchOrders, type Order } from "../components/user/order/OrderHelper";
+import OrderPaymentCard from "../components/user/order/OrderPaymentCard";
+import PurchasedItems from "../components/user/order/PurchasedItems";
+import SplitDispatchCard from "../components/user/order/SplitDispatchCard";
 
 function OrderPage() {
 	const [order, setOrder] = useState<Order | null>(null);

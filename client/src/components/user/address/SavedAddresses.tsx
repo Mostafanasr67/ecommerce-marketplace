@@ -1,0 +1,83 @@
+import { useEffect, useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import AddressCard from "./AddressCard";
+import {
+	fetchAddresses,
+	deleteAddress,
+	setDefaultAddress,
+	type Address,
+} from "./AddressHelper";
+import { getCurrentUserId } from "../../../utils/currentUser";
+
+type SavedAddressesProps = {
+	onEdit?: (address: Address) => void;
+	selectedAddress: Address | null;
+	setSelectedAddress: (address: Address | null) => void;
+};
+
+function SavedAddresses({ onEdit, selectedAddress, setSelectedAddress }: SavedAddressesProps) {
+	const queryClient = useQueryClient();
+	const userId = getCurrentUserId();
+	const addressQuery = useQuery({
+		queryKey: ["addresses", userId],
+		queryFn: fetchAddresses,
+		enabled: userId !== null,
+	});
+	const addresses: Address[] = useMemo(() => addressQuery.data?.addresses ?? [], [addressQuery.data]);
+	const defaultAddressId = addressQuery.data?.defaultAddressId ?? null;
+
+	// pre-select the default address if no address is selected
+	useEffect(() => {
+		if (selectedAddress) return;
+		const defaultAddress = addresses.find((address) => address.id === defaultAddressId);
+		if (defaultAddress) setSelectedAddress(defaultAddress);
+	}, [addresses, defaultAddressId, selectedAddress, setSelectedAddress]);
+
+	const deleteAddressMutation = useMutation({
+		mutationFn: (id: string) => {
+			return deleteAddress(id);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["addresses"] });
+		},
+	});
+
+	const setDefaultAddressMutation = useMutation({
+		mutationFn: (id: string) => {
+			return setDefaultAddress(id);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["addresses"] });
+		},
+	});
+
+	return (
+		<section className="flex flex-col gap-space-md rounded-xl bg-surface-container-lowest p-space-lg shadow-sm">
+			<div className="flex items-center justify-between">
+				<div className="flex items-center gap-space-sm">
+					<span className="h-6 w-2.5 rounded-full bg-primary" />
+					<h2 className="font-headline-sm text-headline-sm font-bold text-on-surface">
+						Saved Delivery Addresses
+					</h2>
+				</div>
+			</div>
+
+			<div className="flex flex-col gap-space-md">
+				{addresses.map((address) => (
+					<AddressCard
+						key={address.id}
+						address={address}
+						isDefault={address.id === defaultAddressId}
+						onEdit={() => onEdit?.(address)}
+						isSelected={selectedAddress?.id === address.id}
+						onSelect={() => setSelectedAddress(address)}
+						onDelete={() => deleteAddressMutation.mutate(address.id)}
+						onSetDefault={() => setDefaultAddressMutation.mutate(address.id)}
+					/>
+				))}
+			</div>
+		</section>
+	);
+}
+
+export default SavedAddresses;

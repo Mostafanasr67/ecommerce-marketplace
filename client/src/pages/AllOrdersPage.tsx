@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import ProfileSidebar from "../components/profile/ProfileSidebar";
-import OrdersHeader from "../components/orders/OrdersHeader";
-import OrdersFilter from "../components/orders/OrdersFilter";
-import OrdersList from "../components/orders/OrdersList";
-import { fetchOrders } from "../components/order/OrderHelper";
+import ProfileSidebar from "../components/user/profile/ProfileSidebar";
+import OrdersHeader from "../components/user/orders/OrdersHeader";
+import OrdersFilter from "../components/user/orders/OrdersFilter";
+import OrdersList from "../components/user/orders/OrdersList";
+import { fetchOrders } from "../components/user/order/OrderHelper";
 import type { Order } from "../types/order";
 
 function AllOrdersPage({ wishlist }: { wishlist: string[] }) {
@@ -35,9 +35,10 @@ function AllOrdersPage({ wishlist }: { wishlist: string[] }) {
 		};
 	}, []);
 
-	const filteredOrders = selectedStatus === "ALL"
-		? orders
-		: orders.filter((order) => order.status === selectedStatus);
+	const filteredOrders =
+		selectedStatus === "ALL"
+			? orders
+			: orders.filter((order) => order.status === selectedStatus);
 
 	return (
 		<main className="min-h-screen bg-surface">
@@ -54,7 +55,10 @@ function AllOrdersPage({ wishlist }: { wishlist: string[] }) {
 							onStatusChange={setSelectedStatus}
 						/>
 						{error ? (
-							<p role="alert" className="rounded-xl bg-error-container p-space-lg text-on-error-container">
+							<p
+								role="alert"
+								className="rounded-xl bg-error-container p-space-lg text-on-error-container"
+							>
 								{error}
 							</p>
 						) : (

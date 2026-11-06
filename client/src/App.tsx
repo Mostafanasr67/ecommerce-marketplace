@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
-import type { Address } from "./components/address/AddressHelper";
+import type { Address } from "./components/user/address/AddressHelper";
 import { Routes, Route, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
-import Header from "./components/general/Header";
-import Footer from "./components/general/Footer";
-import FeaturedProducts from "./components/products/FeaturedProducts";
+import Header from "./components/user/general/Header";
+import Footer from "./components/user/general/Footer";
+import FeaturedProducts from "./components/user/products/FeaturedProducts";
 import ProductDetails from "./pages/ProductDetails";
 import CartPage from "./pages/CartPage";
-import { fetchCartItems } from "./components/cart/CartHelper";
-import { fetchWishlist, addToWishlist, removeFromWishlist } from "./components/product/ProductHelper";
+import { fetchCartItems } from "./components/user/cart/CartHelper";
+import { fetchWishlist, addToWishlist, removeFromWishlist } from "./components/user/product/ProductHelper";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import HomePage from "./pages/HomePage";
 import AddressPage from "./pages/AddressPage";
@@ -19,16 +19,24 @@ import ProfilePage from "./pages/ProfilePage";
 import AllOrdersPage from "./pages/AllOrdersPage";
 import LoginPage from "./pages/LoginPage";
 import WishlistPage from "./pages/WishlistPage";
+import SellerDashboard from "./pages/seller/SellerDashboard";
+import { Role } from "../../server/generated/prisma/enums";
+import { getCurrentUserRole } from "./utils/currentUser";
 
 function App() {
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
+	const location = useLocation();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [categoryQuery, setCategoryQuery] = useState("");
 	const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
 	const [paymentMethod, setPaymentMethod] = useState("ONLINE");
 	const queryClient = useQueryClient();
 	const isAuthenticated = Boolean(localStorage.getItem("token"));
+	const role = isAuthenticated ? getCurrentUserRole() : null;
+	const homePath = role === Role.SELLER
+		? "/seller-dashboard"
+		: role === Role.ADMIN ? "/admin-dashboard" : "/home";
 
 	useEffect(() => {
 		const token = searchParams.get("token");
@@ -37,6 +45,7 @@ function App() {
 		if (token) {
 			queryClient.clear();
 			localStorage.setItem("token", token);
+			localStorage.removeItem("user");
 			if (userJson) {
 				try {
 					const user = JSON.parse(userJson);
@@ -45,22 +54,20 @@ function App() {
 					console.error("Failed to parse user data:", error);
 				}
 			}
-			navigate("/home", { replace: true });
+			navigate(location.pathname, { replace: true });
 		}
-	}, [navigate, queryClient, searchParams]);
-
-	const location = useLocation();
+	}, [location.pathname, navigate, queryClient, searchParams]);
 
 	const cartQuery = useQuery({
 		queryKey: ["cart"],
 		queryFn: fetchCartItems,
-		enabled: isAuthenticated,
+		enabled: isAuthenticated && role === Role.USER,
 	});
 
 	const wishlistQuery = useQuery({
 		queryKey: ["wishlist"],
 		queryFn: fetchWishlist,
-		enabled: isAuthenticated,
+		enabled: isAuthenticated && role === Role.USER,
 	});
 
 	const cartCount =
@@ -71,6 +78,7 @@ function App() {
 	const isLoginPage = location.pathname === "/" && !isAuthenticated;
 	const authenticatedPage = (element: ReactNode) =>
 		isAuthenticated ? element : <Navigate to="/" replace />;
+	const isDashboard = location.pathname === "/seller-dashboard" || location.pathname === "/admin-dashboard";
 
 	function handleLogout() {
 		localStorage.removeItem("token");
@@ -107,9 +115,24 @@ function App() {
 		}
 	}
 
+	if (searchParams.get("token")) {
+		return null;
+	}
+
+	if (isAuthenticated && !role) {
+		return (
+			<main className="p-space-lg">
+				<p role="alert">Your session has no valid user role. Please log in again.</p>
+				<button type="button" onClick={handleLogout} className="mt-space-md cursor-pointer text-primary underline">
+					Log out
+				</button>
+			</main>
+		);
+	}
+
 	return (
 		<>
-			{isAuthenticated && !isLoginPage && (
+			{isAuthenticated && !isLoginPage && !isDashboard && (
 				<Header
 					searchQuery={searchQuery}
 					setSearchQuery={setSearchQuery}
@@ -126,7 +149,7 @@ function App() {
 					path="/"
 					element={
 						isAuthenticated
-							? <Navigate to="/home" replace />
+							? <Navigate to={homePath} replace />
 							: <LoginPage />
 					}
 				/>
@@ -202,11 +225,26 @@ function App() {
 				/>
 				<Route
 					path="*"
-					element={<Navigate to={isAuthenticated ? "/home" : "/"} replace />}
+					element={<Navigate to={isAuthenticated ? homePath : "/"} replace />}
+				/>
+				<Route
+					path="/seller-dashboard"
+					element={isAuthenticated && role === Role.SELLER
+						? <SellerDashboard onLogout={handleLogout} />
+						: <Navigate to={isAuthenticated ? homePath : "/"} replace />}
+				/>
+				<Route
+					path="/admin-dashboard"
+					element={isAuthenticated && role === Role.ADMIN
+						? <main className="p-space-lg">
+							<p>Admin dashboard is not available yet.</p>
+							<button type="button" onClick={handleLogout} className="mt-space-md cursor-pointer text-primary underline">Log out</button>
+						</main>
+						: <Navigate to={isAuthenticated ? homePath : "/"} replace />}
 				/>
 			</Routes>
 
-			{isAuthenticated && !isLoginPage && <Footer />}
+			{isAuthenticated && !isLoginPage && !isDashboard && <Footer />}
 		</>
 	);
 }
