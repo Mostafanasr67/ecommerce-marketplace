@@ -64,6 +64,8 @@ model Product {
   name        String
   description String?
   price       Decimal
+  discountType String?
+  discountValue Decimal?
   stock       Int
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -160,6 +162,8 @@ model Order {
   userId      String
   status      OrderStatus
   totalAmount Decimal
+  couponCode String?
+  couponDiscount Decimal @default(0)
 
   // shipping info snapshot
 
@@ -178,8 +182,19 @@ model Order {
   user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
   sellerOrders SellerOrder[]
   payment      Payment?
+  couponRedemption CouponRedemption?
 
   @@index([userId])
+}
+
+model CouponRedemption {
+  id        String @id @default(uuid())
+  userId    String
+  code      String
+  orderId   String @unique
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, code])
 }
 
 enum OrderStatus {

@@ -13,6 +13,8 @@ type SellerProduct = {
 	name: string;
 	description: string | null;
 	price: string;
+	discountType: "PERCENT" | "FIXED" | null;
+	discountValue: string | null;
 	stock: number;
 	createdAt: string;
 	updatedAt: string;

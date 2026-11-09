@@ -20,7 +20,7 @@ type SellerOrder = {
     id: string;
     orderId: string;
     sellerId: string;
-    status: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+    status: "PENDING" | "CONFIRMED" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
     subTotal: string | number;
     orderItems?: OrderItem[];
 };
@@ -46,6 +46,8 @@ type Order = {
     userId: string;
     status: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
     totalAmount: string | number;
+    couponCode?: string | null;
+    couponDiscount?: string | number;
     fullname: string;
     phone: string;
     street: string;

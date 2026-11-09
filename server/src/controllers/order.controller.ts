@@ -1,5 +1,5 @@
 import type {Request, Response} from "express"; 
-import { createOrder as createOrderService, getOrders as getOrdersService, getOrderById as getOrderByIdService } from "../services/order.service.js";
+import { createOrder as createOrderService, getOrders as getOrdersService, getOrderById as getOrderByIdService, previewOrder as previewOrderService } from "../services/order.service.js";
 import AppError from "../utils/appError.js";
 
 function getAuthenticatedUserId(req: Request): string {
@@ -16,6 +16,11 @@ async function createOrder(req: Request, res: Response) {
     res.status(201).json(order);
 }
 
+async function previewOrder(req: Request, res: Response) {
+    const userId = getAuthenticatedUserId(req);
+    res.json(await previewOrderService(userId, req.body?.couponCode));
+}
+
 async function getOrders(req: Request, res: Response) {
     const userId = getAuthenticatedUserId(req);
     const orders = await getOrdersService(userId);
@@ -29,4 +34,4 @@ async function getOrderById(req: Request, res: Response) {
     res.status(200).json(order);
 }
 
-export { createOrder, getOrders, getOrderById };
+export { createOrder, getOrders, getOrderById, previewOrder };

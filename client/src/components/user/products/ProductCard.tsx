@@ -6,6 +6,7 @@ type ProductCardProps = {
 	image?: string;
 	price: number;
 	oldPrice?: number;
+	originalPrice?: string | number;
 	rating?: number;
 	seller: string | { storeName: string };
 	badge?: string;
@@ -19,6 +20,7 @@ function ProductCard({
 	image,
 	price,
 	oldPrice,
+	originalPrice,
 	rating,
 	seller,
 	badge,
@@ -26,6 +28,8 @@ function ProductCard({
 	toggleWishlist,
 }: ProductCardProps) {
 	const sellerName = typeof seller === "string" ? seller : seller.storeName;
+	const regularPrice = originalPrice === undefined ? oldPrice : Number(originalPrice);
+	const currentPrice = Number(price);
 
 	return (
 		<article className="group overflow-hidden rounded-xl bg-surface-container-lowest shadow-sm transition-shadow hover:shadow-md">
@@ -86,12 +90,12 @@ function ProductCard({
 
 				<div className="flex flex-wrap items-baseline gap-space-sm">
 					<span className="text-price-lg font-bold text-on-surface">
-						EGP {price.toLocaleString("en-EG")}
+						EGP {currentPrice.toLocaleString("en-EG")}
 					</span>
 
-					{oldPrice !== undefined && (
+					{regularPrice !== undefined && regularPrice > currentPrice && (
 						<span className="text-price-sm text-outline line-through">
-							EGP {oldPrice.toLocaleString("en-EG")}
+							EGP {regularPrice.toLocaleString("en-EG")}
 						</span>
 					)}
 				</div>

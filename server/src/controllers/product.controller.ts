@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import type { UpdateProductData, ProductFilters } from "../services/product.service.js";
 import { getAllProducts as getAllProductsService, getProductById as getProductByIdService, createProduct as createProductService, updateProduct as updateProductService, deleteProduct as deleteProductService } from "../services/product.service.js";
+import { customerProduct } from "../utils/productPricing.js";
 
 async function getAllProducts(req: Request, res: Response) {
 
@@ -71,7 +72,7 @@ async function getAllProducts(req: Request, res: Response) {
     };
 
     const response = await getAllProductsService(limit, page, filters);
-    res.json({ products: response.products, pagination: { page, limit, totalCount: response.totalCount, totalPages: response.totalPages } });
+    res.json({ products: response.products.map(customerProduct), pagination: { page, limit, totalCount: response.totalCount, totalPages: response.totalPages } });
 }
 
 async function getProductById(req: Request, res: Response) {
@@ -89,12 +90,21 @@ async function getProductById(req: Request, res: Response) {
         return;
     }
 
-    res.json(product);
+    res.json(customerProduct(product));
 }
 
 async function createProduct(req: Request, res: Response) {
-    const { name, description, price, stock, categoryId } = req.body;
+    const { name, description, price, stock, categoryId, discountType, discountValue } = req.body;
     const userId = req.user?.id;
+    const normalizedDiscountType = discountType ?? null;
+    const normalizedDiscountValue = discountValue ?? null;
+    const validMoney = (value: unknown): value is number =>
+        typeof value === "number" &&
+        Number.isFinite(value) &&
+        value > 0 &&
+        value <= 1000000000 &&
+        Number.isSafeInteger(Math.round(value * 100)) &&
+        Math.abs(value * 100 - Math.round(value * 100)) < 0.000001;
 
     if (
         typeof name !== "string" ||
@@ -103,13 +113,18 @@ async function createProduct(req: Request, res: Response) {
             description !== null &&
             typeof description !== "string") ||
         typeof price !== "number" ||
-        !Number.isFinite(price) ||
-        price <= 0 ||
+        !validMoney(price) ||
         typeof stock !== "number" ||
         !Number.isInteger(stock) ||
         stock < 0 ||
+        stock > 2147483647 ||
         typeof categoryId !== "string" ||
         !categoryId.trim() ||
+        (normalizedDiscountType !== null && normalizedDiscountType !== "PERCENT" && normalizedDiscountType !== "FIXED") ||
+        (normalizedDiscountType === null && normalizedDiscountValue !== null) ||
+        (normalizedDiscountType !== null &&
+            (!validMoney(normalizedDiscountValue) ||
+                normalizedDiscountValue >= (normalizedDiscountType === "PERCENT" ? 100 : price))) ||
         typeof userId !== "string" ||
         !userId
     ) {
@@ -118,7 +133,16 @@ async function createProduct(req: Request, res: Response) {
     }
 
 
-    const product = await createProductService(name.trim(), description ?? null, price, stock, categoryId, userId);
+    const product = await createProductService(
+        name.trim(),
+        description ?? null,
+        price,
+        stock,
+        categoryId.trim(),
+        userId,
+        normalizedDiscountType,
+        normalizedDiscountValue,
+    );
     res.status(201).json(product);
 
 }

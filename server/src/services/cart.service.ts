@@ -1,4 +1,5 @@
 import prisma from "../prisma.js";
+import { effectivePrice } from "../utils/productPricing.js";
 
 // Match the Prisma schema exactly
 interface CartItem {
@@ -170,7 +171,7 @@ async function calculateCartTotalService(userId: string) {
     if (!cart) {
         throw new Error("Cart not found");
     }
-    const total = (cart.cartItems as unknown as CartItemWithProduct[]).reduce((sum: number, cartItem: CartItemWithProduct) => sum + (cartItem.quantity * parseFloat(cartItem.product.price.toString())), 0);
+    const total = cart.cartItems.reduce((sum, item) => sum + item.quantity * Number(effectivePrice(item.product)), 0);
     return { total };
 }
 

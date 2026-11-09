@@ -51,15 +51,30 @@ function getProductById(id: string) {
     });
 }
 
-async function createProduct(name: string, description: string | null, price: number, stock: number, categoryId: string, userId: string) {
+async function createProduct(
+    name: string,
+    description: string | null,
+    price: number,
+    stock: number,
+    categoryId: string,
+    userId: string,
+    discountType: "PERCENT" | "FIXED" | null = null,
+    discountValue: number | null = null,
+) {
     const user = await prisma.user.findUnique({
         where: { id: userId },
         include: { seller: true }
     });
 
     if (!user?.seller) {
-        throw new Error("User must be a seller to create products");
+        throw new AppError("Seller profile not found", 403);
     }
+
+    const category = await prisma.category.findUnique({
+        where: { id: categoryId },
+        select: { id: true },
+    });
+    if (!category) throw new AppError("Selected category was not found. Choose an existing category.", 400);
 
     return prisma.product.create({
         data: {
@@ -68,7 +83,9 @@ async function createProduct(name: string, description: string | null, price: nu
             "price": price,
             "stock": stock,
             "categoryId": categoryId,
-            "sellerId": user.seller.id
+            "sellerId": user.seller.id,
+            "discountType": discountType,
+            "discountValue": discountValue,
         }
     });
 }
@@ -102,6 +119,10 @@ async function updateProduct(id: string, userId: string, data: UpdateProductData
 
     if (product.sellerId !== user.seller.id) {
         throw new Error("User can only update their own products");
+    }
+
+    if (data.price !== undefined && product.discountType === "FIXED" && product.discountValue && product.discountValue.greaterThanOrEqualTo(data.price)) {
+        throw new AppError("Price must exceed the fixed discount", 400);
     }
 
     if (Object.keys(data).length === 0) {

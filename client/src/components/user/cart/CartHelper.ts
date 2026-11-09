@@ -53,6 +53,7 @@ function toCartItemView(item: CartItem): CartItemView {
     return {
         ...item,
         product: { ...item.product, price: Number(item.product.price) },
+        originalPrice: item.product.originalPrice === undefined ? undefined : Number(item.product.originalPrice),
         category: "",
         image: "",
         badge: "",

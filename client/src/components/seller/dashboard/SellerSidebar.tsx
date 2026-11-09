@@ -1,19 +1,20 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const navigationItems = [
-	{ label: "Overview", icon: "grid_view", href: "/overview", active: true },
-	{ label: "Products", icon: "inventory_2", href: "/inventory", active: false },
-	{ label: "Orders", icon: "shopping_bag", href: "/recent-orders", active: false },
-	{ label: "Store Settings", icon: "tune", href: "/store-settings", active: false },
+	{ label: "Overview", icon: "grid_view", href: "/seller-dashboard"},
+	{ label: "Products", icon: "inventory_2", href: "/seller-products"},
+	{ label: "Orders", icon: "shopping_bag", href: "/seller-orders"},
+	{ label: "Store Settings", icon: "tune", href: "/store-settings"},
 ];
 
 function SellerSidebar({ onLogout }: { onLogout: () => void }) {
+	const location = useLocation();
 	return (
 		<aside className="fixed left-0 top-0 z-50 flex h-full w-72 flex-col justify-between bg-surface-container-lowest font-body-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
 			<div className="flex flex-col">
 				<div className="flex h-20 items-center justify-between px-space-lg">
 					<div className="flex items-center gap-space-sm">
-						<Link to="/home" className="shrink-0 flex items-center gap-space-md hover:opacity-80 transition-opacity">
+						<Link to="/seller-dashboard" className="shrink-0 flex items-center gap-space-md hover:opacity-80 transition-opacity">
 						<div>
 							<span className="font-headline-md font-bold tracking-tight block">
 								SOVEREIGN
@@ -36,14 +37,14 @@ function SellerSidebar({ onLogout }: { onLogout: () => void }) {
 								key={item.label}
 								to={item.href}
 								className={`group flex items-center gap-space-sm rounded-xl px-space-md py-3 font-label-lg text-label-lg font-semibold transition-colors ${
-									item.active
+									location.pathname === item.href
 										? "bg-primary text-on-primary!"
 										: "text-on-surface-variant! hover:bg-surface-container-low hover:text-on-surface!"
 								}`}
-								aria-current={item.active ? "page" : undefined}
+								aria-current={location.pathname === item.href ? "page" : undefined}
 							>
 								<span className={`material-symbols-outlined text-xl ${
-									item.active ? "text-on-primary" : "text-outline group-hover:text-primary"
+									location.pathname === item.href ? "text-on-primary" : "text-outline group-hover:text-primary"
 								}`}>{item.icon}</span>
 								{item.label}
 							</Link>

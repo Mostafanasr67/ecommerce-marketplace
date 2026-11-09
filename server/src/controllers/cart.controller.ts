@@ -7,6 +7,7 @@ import {
     clearCartService,
 } from "../services/cart.service.js";
 import { calculateCartTotalService } from "../services/cart.service.js";
+import { customerProduct } from "../utils/productPricing.js";
 
 async function getCart(req: Request, res: Response): Promise<void> {
 
@@ -17,7 +18,10 @@ async function getCart(req: Request, res: Response): Promise<void> {
     }
     const cart = await getCartService(userId);
     const total = await calculateCartTotalService(userId);
-    res.status(200).json({ cart, total });
+    res.status(200).json({
+        cart: cart ? { ...cart, cartItems: cart.cartItems.map((item) => ({ ...item, product: customerProduct(item.product) })) } : null,
+        total,
+    });
 
 }
 

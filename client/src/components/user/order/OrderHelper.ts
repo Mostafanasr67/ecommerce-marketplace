@@ -6,6 +6,16 @@ type CreateOrderInput = {
     addressId: string;
     paymentMethod: "COD" | "ONLINE";
     cardId?: string;
+    couponCode?: string;
+};
+
+type OrderPreview = {
+    subtotal: string;
+    regularSubtotal: string;
+    couponDiscount: string;
+    delivery: string;
+    total: string;
+    couponCode: string | null;
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -39,11 +49,18 @@ async function createOrder(data: CreateOrderInput): Promise<Order> {
     });
 }
 
+async function previewOrder(couponCode: string | null): Promise<OrderPreview> {
+    return request<OrderPreview>("/orders/preview", {
+        method: "POST",
+        body: JSON.stringify({ couponCode }),
+    });
+}
 
 export {
     fetchOrders,
     fetchOrderById,
     createOrder,
+    previewOrder,
 };
 
 export type { Order, OrderItem, SellerOrder, Payment, CreateOrderInput };

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import ProfileSidebar from "../components/user/profile/ProfileSidebar";
-import OrdersHeader from "../components/user/orders/OrdersHeader";
-import OrdersFilter from "../components/user/orders/OrdersFilter";
-import OrdersList from "../components/user/orders/OrdersList";
-import { fetchOrders } from "../components/user/order/OrderHelper";
-import type { Order } from "../types/order";
+import ProfileSidebar from "../../components/user/profile/ProfileSidebar";
+import OrdersHeader from "../../components/user/orders/OrdersHeader";
+import OrdersFilter from "../../components/user/orders/OrdersFilter";
+import OrdersList from "../../components/user/orders/OrdersList";
+import { fetchOrders } from "../../components/user/order/OrderHelper";
+import type { Order } from "../../types/order";
 
 function AllOrdersPage({ wishlist }: { wishlist: string[] }) {
 	const [selectedStatus, setSelectedStatus] = useState("ALL");

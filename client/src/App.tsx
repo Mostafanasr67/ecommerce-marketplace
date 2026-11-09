@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import type { Address } from "./components/user/address/AddressHelper";
 import { Routes, Route, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -6,22 +6,40 @@ import { Routes, Route, Navigate, useLocation, useNavigate, useSearchParams } fr
 import Header from "./components/user/general/Header";
 import Footer from "./components/user/general/Footer";
 import FeaturedProducts from "./components/user/products/FeaturedProducts";
-import ProductDetails from "./pages/ProductDetails";
-import CartPage from "./pages/CartPage";
+import ProductDetails from "./pages/user/ProductDetails";
+import CartPage from "./pages/user/CartPage";
 import { fetchCartItems } from "./components/user/cart/CartHelper";
 import { fetchWishlist, addToWishlist, removeFromWishlist } from "./components/user/product/ProductHelper";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import HomePage from "./pages/HomePage";
-import AddressPage from "./pages/AddressPage";
-import PaymentPage from "./pages/PaymentPage";
-import OrderPage from "./pages/OrderPage";
-import ProfilePage from "./pages/ProfilePage";
-import AllOrdersPage from "./pages/AllOrdersPage";
-import LoginPage from "./pages/LoginPage";
-import WishlistPage from "./pages/WishlistPage";
+import HomePage from "./pages/user/HomePage";
+import AddressPage from "./pages/user/AddressPage";
+import PaymentPage from "./pages/user/PaymentPage";
+import OrderPage from "./pages/user/OrderPage";
+import ProfilePage from "./pages/user/ProfilePage";
+import AllOrdersPage from "./pages/user/AllOrdersPage";
+import LoginPage from "./pages/user/LoginPage";
+import WishlistPage from "./pages/user/WishlistPage";
 import SellerDashboard from "./pages/seller/SellerDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import { Role } from "../../server/generated/prisma/enums";
-import { getCurrentUserRole } from "./utils/currentUser";
+import { getAccessRedirect, getRoleHomePath } from "./utils/routeAccess";
+import SellerOrdersPage from "./pages/seller/SellerOrdersPage.tsx";
+import SellerProductsPage from "./pages/seller/SellerProductsPage";
+import SellerStoreSettingsPage from "./pages/seller/SellerStoreSettingsPage";
+import { CheckoutCouponProvider } from "./components/user/cart/CheckoutCoupon";
+
+function subscribeToTokenChange(callback: () => void) {
+	window.addEventListener("storage", callback);
+	window.addEventListener("session-token-change", callback);
+	return () => {
+		window.removeEventListener("storage", callback);
+		window.removeEventListener("session-token-change", callback);
+	};
+}
+
+function getStoredToken() {
+	return localStorage.getItem("token");
+}
 
 function App() {
 	const [searchParams] = useSearchParams();
@@ -32,31 +50,53 @@ function App() {
 	const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
 	const [paymentMethod, setPaymentMethod] = useState("ONLINE");
 	const queryClient = useQueryClient();
-	const isAuthenticated = Boolean(localStorage.getItem("token"));
-	const role = isAuthenticated ? getCurrentUserRole() : null;
-	const homePath = role === Role.SELLER
-		? "/seller-dashboard"
-		: role === Role.ADMIN ? "/admin-dashboard" : "/home";
+	const token = useSyncExternalStore(subscribeToTokenChange, getStoredToken);
+	const sessionQuery = useQuery({
+		queryKey: ["session", token],
+		queryFn: async () => {
+			const response = await fetch("http://localhost:5000/auth/me", {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (response.status === 401) throw new Error("Your session has expired or is invalid. Please log in again.");
+			if (!response.ok) throw new Error(`Could not verify your session (${response.status}). Please try again.`);
+			const user: unknown = await response.json();
+			if (
+				typeof user !== "object" || user === null || !("id" in user) ||
+				typeof user.id !== "string" || !("role" in user) ||
+				(user.role !== Role.USER && user.role !== Role.SELLER && user.role !== Role.ADMIN)
+			) {
+				throw new Error("The server returned an invalid session.");
+			}
+			if (localStorage.getItem("token") !== token) throw new Error("Your session changed. Please try again.");
+			localStorage.setItem("user", JSON.stringify(user));
+			return { id: user.id, role: user.role };
+		},
+		enabled: Boolean(token) && !searchParams.get("token"),
+		retry: false,
+		staleTime: 0,
+	});
+	const isAuthenticated = Boolean(token && sessionQuery.data);
+	const role = sessionQuery.data?.role ?? null;
+	const homePath = role ? getRoleHomePath(role) : "/";
 
 	useEffect(() => {
 		const token = searchParams.get("token");
-		const userJson = searchParams.get("user");
-
 		if (token) {
 			queryClient.clear();
 			localStorage.setItem("token", token);
 			localStorage.removeItem("user");
-			if (userJson) {
-				try {
-					const user = JSON.parse(userJson);
-					localStorage.setItem("user", JSON.stringify(user));
-				} catch (error) {
-					console.error("Failed to parse user data:", error);
-				}
-			}
+			window.dispatchEvent(new Event("session-token-change"));
 			navigate(location.pathname, { replace: true });
 		}
 	}, [location.pathname, navigate, queryClient, searchParams]);
+
+	useEffect(() => {
+		const clearChangedSession = (event: StorageEvent) => {
+			if (event.key === "token" || event.key === null) queryClient.clear();
+		};
+		window.addEventListener("storage", clearChangedSession);
+		return () => window.removeEventListener("storage", clearChangedSession);
+	}, [queryClient]);
 
 	const cartQuery = useQuery({
 		queryKey: ["cart"],
@@ -76,13 +116,16 @@ function App() {
 	const wishlist = wishlistQuery.data?.map((p) => p.id) ?? [];
 
 	const isLoginPage = location.pathname === "/" && !isAuthenticated;
-	const authenticatedPage = (element: ReactNode) =>
-		isAuthenticated ? element : <Navigate to="/" replace />;
+	const authorizedPage = (requiredRole: Role, element: ReactNode) => {
+		const redirect = getAccessRedirect(role, requiredRole);
+		return redirect ? <Navigate to={redirect} replace /> : element;
+	};
 	const isDashboard = location.pathname === "/seller-dashboard" || location.pathname === "/admin-dashboard";
 
 	function handleLogout() {
 		localStorage.removeItem("token");
 		localStorage.removeItem("user");
+		window.dispatchEvent(new Event("session-token-change"));
 		setSelectedAddress(null);
 		setPaymentMethod("ONLINE");
 		queryClient.clear();
@@ -119,10 +162,17 @@ function App() {
 		return null;
 	}
 
-	if (isAuthenticated && !role) {
+	if (token && sessionQuery.isPending) {
+		return <main className="p-space-lg"><p>Verifying your session...</p></main>;
+	}
+
+	if (token && sessionQuery.isError) {
 		return (
 			<main className="p-space-lg">
-				<p role="alert">Your session has no valid user role. Please log in again.</p>
+				<p role="alert">{sessionQuery.error.message}</p>
+				<button type="button" onClick={() => void sessionQuery.refetch()} className="mt-space-md mr-space-md cursor-pointer text-primary underline">
+					Try again
+				</button>
 				<button type="button" onClick={handleLogout} className="mt-space-md cursor-pointer text-primary underline">
 					Log out
 				</button>
@@ -132,7 +182,7 @@ function App() {
 
 	return (
 		<>
-			{isAuthenticated && !isLoginPage && !isDashboard && (
+			{isAuthenticated && !isLoginPage && !isDashboard && role == Role.USER && (
 				<Header
 					searchQuery={searchQuery}
 					setSearchQuery={setSearchQuery}
@@ -144,6 +194,7 @@ function App() {
 				/>
 			)}
 
+			<CheckoutCouponProvider key={token ?? "guest"}>
 			<Routes>
 				<Route
 					path="/"
@@ -155,7 +206,7 @@ function App() {
 				/>
 				<Route
 					path="/home"
-					element={authenticatedPage(
+					element={authorizedPage(Role.USER,
 						<HomePage
 							searchQuery={searchQuery}
 							categoryQuery={categoryQuery}
@@ -167,7 +218,7 @@ function App() {
 				/>
 				<Route
 					path="/products"
-					element={authenticatedPage(
+					element={authorizedPage(Role.USER,
 						<main className="min-h-screen bg-surface">
 							<FeaturedProducts
 								searchQuery={searchQuery}
@@ -180,7 +231,7 @@ function App() {
 				/>
 				<Route
 					path="/products/:id"
-					element={authenticatedPage(
+					element={authorizedPage(Role.USER,
 						<ProductDetails
 							wishlist={wishlist}
 							toggleWishlist={toggleWishlist}
@@ -189,37 +240,37 @@ function App() {
 				/>
 				<Route
 					path="/cart"
-					element={authenticatedPage(
+					element={authorizedPage(Role.USER,
 						<CartPage wishlist={wishlist} toggleWishlist={toggleWishlist} />,
 					)}
 				/>
 				<Route
 					path="/address"
-					element={authenticatedPage(
+					element={authorizedPage(Role.USER,
 						<AddressPage selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress} />,
 					)}
 				/>
 				<Route
 					path="/payment"
-					element={authenticatedPage(
+					element={authorizedPage(Role.USER,
 						<PaymentPage selectedAddress={selectedAddress} paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod} />,
 					)}
 				/>
 				<Route
 					path="/place-order"
-					element={authenticatedPage(<OrderPage />)}
+					element={authorizedPage(Role.USER, <OrderPage />)}
 				/>
 				<Route
 					path="/profile"
-					element={authenticatedPage(<ProfilePage wishlist={wishlist} />)}
+					element={authorizedPage(Role.USER, <ProfilePage wishlist={wishlist} />)}
 				/>
 				<Route
 					path="/orders"
-					element={authenticatedPage(<AllOrdersPage wishlist={wishlist} />)}
+					element={authorizedPage(Role.USER, <AllOrdersPage wishlist={wishlist} />)}
 				/>
 				<Route
 					path="/wishlist"
-					element={authenticatedPage(
+					element={authorizedPage(Role.USER,
 						<WishlistPage wishlist={wishlist} toggleWishlist={toggleWishlist} />,
 					)}
 				/>
@@ -229,22 +280,28 @@ function App() {
 				/>
 				<Route
 					path="/seller-dashboard"
-					element={isAuthenticated && role === Role.SELLER
-						? <SellerDashboard onLogout={handleLogout} />
-						: <Navigate to={isAuthenticated ? homePath : "/"} replace />}
+					element={authorizedPage(Role.SELLER, <SellerDashboard onLogout={handleLogout} />)}
+				/>
+				<Route
+					path="/seller-orders"
+					element={authorizedPage(Role.SELLER, <SellerOrdersPage onLogout={handleLogout} />)}
+				/>
+				<Route
+					path="/seller-products"
+					element={authorizedPage(Role.SELLER, <SellerProductsPage onLogout={handleLogout} />)}
+				/>
+				<Route
+					path="/store-settings"
+					element={authorizedPage(Role.SELLER, <SellerStoreSettingsPage onLogout={handleLogout} />)}
 				/>
 				<Route
 					path="/admin-dashboard"
-					element={isAuthenticated && role === Role.ADMIN
-						? <main className="p-space-lg">
-							<p>Admin dashboard is not available yet.</p>
-							<button type="button" onClick={handleLogout} className="mt-space-md cursor-pointer text-primary underline">Log out</button>
-						</main>
-						: <Navigate to={isAuthenticated ? homePath : "/"} replace />}
+					element={authorizedPage(Role.ADMIN, <AdminDashboard />)}
 				/>
 			</Routes>
+			</CheckoutCouponProvider>
 
-			{isAuthenticated && !isLoginPage && !isDashboard && <Footer />}
+			{isAuthenticated && !isLoginPage && !isDashboard && role == Role.USER && <Footer />}
 		</>
 	);
 }

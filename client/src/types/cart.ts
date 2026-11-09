@@ -15,6 +15,7 @@ export type Product = {
 	name: string;
 	description: string | null;
 	price: number;
+	originalPrice?: number | string;
 	stock: number;
 	createdAt: string;
 	updatedAt: string;

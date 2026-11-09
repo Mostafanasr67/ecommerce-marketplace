@@ -1,7 +1,7 @@
-import Hero from "../components/user/homepage/Hero";
-import Categories from "../components/user/homepage/Categories";
-import FeaturedProducts from "../components/user/products/FeaturedProducts";
-import RecentlyAdded from "../components/user/homepage/RecentlyAdded";
+import Hero from "../../components/user/homepage/Hero";
+import Categories from "../../components/user/homepage/Categories";
+import FeaturedProducts from "../../components/user/products/FeaturedProducts";
+import RecentlyAdded from "../../components/user/homepage/RecentlyAdded";
 
 function HomePage({
 	searchQuery,

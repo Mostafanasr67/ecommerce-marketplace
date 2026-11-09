@@ -2,8 +2,25 @@ import { Router } from "express";
 import { Role } from "../../generated/prisma/enums.js";
 import passport from "../auth/passport.js";
 import { createToken } from "../utils/jwt.js";
+import authMiddleware from "../auth/auth.middleware.js";
+import asyncHandler from "../utils/asyncHandler.js";
+import { getUserById } from "../services/user.service.js";
 
 const router = Router();
+
+router.get("/me", asyncHandler(authMiddleware), asyncHandler(async (req, res) => {
+  if (!req.user) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+  const user = await getUserById(req.user.id);
+  if (!user) {
+    res.status(401).json({ message: "User not found" });
+    return;
+  }
+  const { id, email, name, phone, gender, dateOfBirth, role } = user;
+  res.json({ id, email, name, phone, gender, dateOfBirth, role });
+}));
 
 router.get(
   "/google",

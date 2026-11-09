@@ -1,18 +1,18 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import CartPackages from "../data/cart";
-import CartControls from "../components/user/cart/CartControls";
-import CartPackage from "../components/user/cart/CartPackage";
-import CheckoutProgress from "../components/user/cart/CheckoutProgress";
-import CartRecommendations from "../components/user/cart/CartRecommendations";
-import OrderSummary from "../components/user/cart/OrderSummary";
-import CartHeader from "../components/user/cart/CartHeader";
+import CartPackages from "../../data/cart";
+import CartControls from "../../components/user/cart/CartControls";
+import CartPackage from "../../components/user/cart/CartPackage";
+import CheckoutProgress from "../../components/user/cart/CheckoutProgress";
+import CartRecommendations from "../../components/user/cart/CartRecommendations";
+import OrderSummary from "../../components/user/cart/OrderSummary";
+import CartHeader from "../../components/user/cart/CartHeader";
 import {
 	fetchCartItems,
 	updateCartItemQuantity,
 	removeCartItem,
 	addCartItem,
-} from "../components/user/cart/CartHelper";
+} from "../../components/user/cart/CartHelper";
 
 function CartPage({
 	wishlist,

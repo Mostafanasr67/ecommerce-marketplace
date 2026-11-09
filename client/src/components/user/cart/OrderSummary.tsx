@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createOrder } from "../order/OrderHelper";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createOrder, previewOrder } from "../order/OrderHelper";
+import { fetchCartItems } from "./CartHelper";
+import { useCheckoutCoupon } from "./checkoutCouponContext";
 import type { Address } from "../address/AddressHelper";
 import type { SavedCard } from "../payment/CardHelper";
 
@@ -15,8 +17,6 @@ type OrderSummaryProps = {
 	selectedCard?: SavedCard | null;
 };
 
-const COUPONS = new Map<string, number>([["WELCOME50", 0.5]]);
-
 const CHECKOUT_STEPS: Record<string, { to: string; label: string }> = {
 	"/cart": { to: "/address", label: "Proceed to Address" },
 	"/address": { to: "/payment", label: "Proceed to Payment" },
@@ -24,23 +24,29 @@ const CHECKOUT_STEPS: Record<string, { to: string; label: string }> = {
 
 function OrderSummary({
 	itemCount,
-	subtotal,
-	savings,
-	delivery,
 	selectedAddress = null,
 	paymentMethod,
 	selectedCard = null,
 }: OrderSummaryProps) {
 	const [couponInput, setCouponInput] = useState("");
-	const [appliedCode, setAppliedCode] = useState<string | null>(null);
+	const { code: appliedCode, setCode } = useCheckoutCoupon();
 	const [couponError, setCouponError] = useState("");
 	const { pathname } = useLocation();
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
+	const cartQuery = useQuery({ queryKey: ["cart"], queryFn: fetchCartItems });
+	const previewQuery = useQuery({
+		queryKey: ["order-preview", appliedCode, cartQuery.dataUpdatedAt],
+		queryFn: () => previewOrder(appliedCode),
+		enabled: cartQuery.isSuccess && !cartQuery.isFetching,
+		retry: false,
+	});
 	const placeOrderMutation = useMutation({
 		mutationFn: createOrder,
 		onSuccess: () => {
+			setCode(null);
 			queryClient.invalidateQueries({ queryKey: ["cart"] });
+			queryClient.invalidateQueries({ queryKey: ["order-preview"] });
 			navigate("/place-order");
 		},
 	});
@@ -52,11 +58,13 @@ function OrderSummary({
 	const checkoutButtonClass =
 		"flex w-full items-center justify-center gap-space-sm rounded-xl bg-primary py-3.5 font-bold shadow-md transition-colors hover:bg-primary-container";
 
-	const discountRate = appliedCode ? (COUPONS.get(appliedCode) ?? 0) : 0;
-	const couponDiscount = Math.round(subtotal * discountRate);
-	const isFreeDelivery = subtotal >= 2000;
-	const total =
-		subtotal - savings - couponDiscount + (isFreeDelivery ? 0 : delivery);
+	const preview = previewQuery.data;
+	const subtotal = Number(preview?.subtotal ?? 0);
+	const regularSubtotal = Number(preview?.regularSubtotal ?? 0);
+	const savings = regularSubtotal - subtotal;
+	const couponDiscount = Number(preview?.couponDiscount ?? 0);
+	const delivery = Number(preview?.delivery ?? 0);
+	const total = Number(preview?.total ?? 0);
 
 	function handlePlaceOrder() {
 		if (!selectedAddress) return;
@@ -65,22 +73,18 @@ function OrderSummary({
 			addressId: selectedAddress.id,
 			paymentMethod: method,
 			cardId: method === "ONLINE" && selectedCard ? selectedCard.id : undefined,
+			couponCode: appliedCode ?? undefined,
 		});
 	}
 
 	function applyCoupon() {
 		const code = couponInput.trim().toUpperCase();
 		if (!code) {
-			setAppliedCode(null);
 			setCouponError("Please enter a code.");
 			return;
 		}
-		if (!COUPONS.has(code)) {
-			setAppliedCode(null);
-			setCouponError("Invalid coupon code.");
-			return;
-		}
-		setAppliedCode(code);
+		setCode(code);
+		if (code === appliedCode) void previewQuery.refetch();
 		setCouponError("");
 	}
 
@@ -93,40 +97,41 @@ function OrderSummary({
 					</h2>{" "}
 				</div>
 
+				{(cartQuery.isPending || cartQuery.isFetching || previewQuery.isFetching) && <p>Calculating order total...</p>}
+				{(cartQuery.isError || previewQuery.isError) && (
+					<p role="alert" className="text-error">{cartQuery.error?.message ?? previewQuery.error?.message}</p>
+				)}
+				{preview && !previewQuery.isError && !cartQuery.isError && !cartQuery.isFetching && (
+				<>
 				<div className="flex flex-col gap-space-sm text-body-sm text-on-surface-variant">
 					<div className="flex items-center justify-between">
 						<span>Subtotal ({itemCount} items)</span>
 						<span className="font-semibold text-on-surface">
-							{subtotal.toLocaleString("en-EG")} EGP
+							{regularSubtotal.toLocaleString("en-EG", { maximumFractionDigits: 2 })} EGP
 						</span>
 					</div>
 					<div className="flex items-center justify-between text-tertiary">
 						<span>Vendor Promotional Savings</span>
 						<span className="font-bold">
 							{savings > 0
-								? `-${savings.toLocaleString("en-EG")} EGP`
+								? `-${savings.toLocaleString("en-EG", { maximumFractionDigits: 2 })} EGP`
 								: `0 EGP`}
 						</span>
 					</div>
 					{appliedCode && (
 						<div className="flex items-center justify-between text-tertiary">
 							<span>
-								Coupon {appliedCode} ({discountRate * 100}% off)
+								Coupon {appliedCode}
 							</span>
 							<span className="font-bold">
-								-{couponDiscount.toLocaleString("en-EG")} EGP
+								-{couponDiscount.toLocaleString("en-EG", { maximumFractionDigits: 2 })} EGP
 							</span>
 						</div>
 					)}
 					<div className="flex items-center justify-between">
 						<span> Delivery</span>
 						<span className="font-semibold text-on-surface">
-							{subtotal > 2000 && (
-								<span className="mr-space-xs font-normal text-outline line-through">
-									{delivery.toLocaleString("en-EG")} EGP
-								</span>
-							)}
-							{isFreeDelivery
+							{delivery === 0
 								? `Free`
 								: delivery.toLocaleString("en-EG") + " EGP"}
 						</span>
@@ -152,18 +157,20 @@ function OrderSummary({
 					</div>
 					<div className="text-right">
 						<span className="text-headline-lg font-extrabold text-on-surface">
-							{total.toLocaleString("en-EG")}
+							{total.toLocaleString("en-EG", { maximumFractionDigits: 2 })}
 						</span>{" "}
 						<span className="text-title-md font-bold text-primary">EGP</span>
 					</div>
 				</div>
+				</>
+				)}
 
 				{isPaymentStep ? (
 					<>
 						<button
 							type="button"
 							onClick={handlePlaceOrder}
-							disabled={!selectedAddress || placeOrderMutation.isPending}
+							disabled={!selectedAddress || !itemCount || !preview || previewQuery.isError || previewQuery.isFetching || cartQuery.isError || cartQuery.isFetching || placeOrderMutation.isPending}
 							className={`${checkoutButtonClass} disabled:cursor-not-allowed disabled:opacity-60`}
 						>
 							<span className="text-md text-white">
@@ -221,6 +228,7 @@ function OrderSummary({
 							{couponError}
 						</p>
 					)}
+					{appliedCode && <button type="button" onClick={() => { setCode(null); setCouponInput(""); setCouponError(""); }} className="self-start font-label-sm text-on-surface-variant underline">Remove coupon</button>}
 				</div>
 			</section>
 		</aside>

@@ -1,4 +1,5 @@
 import prisma from "../prisma.js";
+import { customerProduct } from "../utils/productPricing.js";
 
 async function getWishlistService(userId: string) {
 	const wishlist = await prisma.wishlistItem.findMany({
@@ -11,7 +12,7 @@ async function getWishlistService(userId: string) {
 			},
 		},
 	});
-	return wishlist;
+	return wishlist.map((item) => ({ ...item, product: customerProduct(item.product) }));
 }
 
 async function addToWishlistService(userId: string, productId: string) {

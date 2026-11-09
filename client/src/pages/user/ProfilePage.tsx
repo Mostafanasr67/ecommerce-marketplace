@@ -1,6 +1,6 @@
-import ProfileHeader from "../components/user/profile/ProfileHeader";
-import PersonalInformation from "../components/user/profile/PersonalInformation";
-import ProfileSidebar from "../components/user/profile/ProfileSidebar";
+import ProfileHeader from "../../components/user/profile/ProfileHeader";
+import PersonalInformation from "../../components/user/profile/PersonalInformation";
+import ProfileSidebar from "../../components/user/profile/ProfileSidebar";
 
 function ProfilePage({ wishlist }: { wishlist: string[] }) {
 	return (

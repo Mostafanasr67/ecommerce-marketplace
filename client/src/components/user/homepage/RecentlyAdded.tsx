@@ -72,6 +72,7 @@ function RecentlyAdded({ wishlist, toggleWishlist }: RecentlyAddedProps) {
 						name={product.name}
 						image={product.productImages?.[0]?.url}
 						price={product.price}
+						originalPrice={product.originalPrice}
 						seller={product.seller?.storeName ?? "Marketplace"}
 						wishlist={wishlist}
 						toggleWishlist={toggleWishlist}

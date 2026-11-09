@@ -1,9 +1,9 @@
 import { useParams } from "react-router-dom";
-import { products } from "../data/products";
+import { products } from "../../data/products";
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import ProductCard from "../components/user/products/ProductCard";
-import { addCartItem } from "../components/user/cart/CartHelper";
+import ProductCard from "../../components/user/products/ProductCard";
+import { addCartItem } from "../../components/user/cart/CartHelper";
 
 
 type ProductDetailsProps = {
@@ -21,7 +21,11 @@ function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 	useEffect(() => {
 		fetch(`http://localhost:5000/products/${id}`)
 			.then((res) => res.json())
-			.then((data) => setProduct(data));
+			.then((data) => setProduct({
+				...data,
+				price: Number(data.price),
+				oldPrice: Number(data.originalPrice) > Number(data.price) ? Number(data.originalPrice) : undefined,
+			}));
 	}, [id]);
 
 	useEffect(() => {

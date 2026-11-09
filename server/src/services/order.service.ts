@@ -1,6 +1,7 @@
 import prisma from "../prisma.js";
 import AppError from "../utils/appError.js";
-import { Method, OrderStatus, PaymentStatus, SellerOrderStatus } from "../../generated/prisma/client.js";
+import { Method, OrderStatus, PaymentStatus, SellerOrderStatus, Prisma } from "../../generated/prisma/client.js";
+import { effectivePrice } from "../utils/productPricing.js";
 
 const FREE_DELIVERY_THRESHOLD = 2000;
 const DELIVERY_FEE = 35;
@@ -9,7 +10,39 @@ type CreateOrderInput = {
     addressId?: unknown;
     paymentMethod?: unknown;
     cardId?: unknown;
+    couponCode?: unknown;
 };
+
+function normalizeCoupon(value: unknown): string | null {
+    if (value === undefined || value === null) return null;
+    if (typeof value !== "string" || !value.trim() || value.length > 100) throw new AppError("Invalid coupon code", 400);
+    const code = value.trim().toUpperCase();
+    if (code !== "WELCOME50") throw new AppError("Invalid coupon code", 400);
+    return code;
+}
+
+function calculateTotals(items: { quantity: number; product: Parameters<typeof effectivePrice>[0] }[], couponCode: string | null) {
+    const subtotal = items.reduce((sum, item) => sum.plus(effectivePrice(item.product).mul(item.quantity)), new Prisma.Decimal(0));
+    const regularSubtotal = items.reduce((sum, item) => sum.plus(item.product.price.mul(item.quantity)), new Prisma.Decimal(0));
+    const couponDiscount = couponCode ? subtotal.mul("0.5").toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP) : new Prisma.Decimal(0);
+    const delivery = items.length === 0 || subtotal.greaterThanOrEqualTo(FREE_DELIVERY_THRESHOLD) ? new Prisma.Decimal(0) : new Prisma.Decimal(DELIVERY_FEE);
+    return { subtotal, regularSubtotal, couponDiscount, delivery, total: subtotal.minus(couponDiscount).plus(delivery) };
+}
+
+async function previewOrder(userId: string, coupon: unknown) {
+    const couponCode = normalizeCoupon(coupon);
+    const cart = await prisma.cart.findUnique({
+        where: { userId },
+        include: { cartItems: { include: { product: true } } },
+    });
+    const items = cart?.cartItems ?? [];
+    if (couponCode) {
+        if (!items.length) throw new AppError("Add products to your cart before applying a coupon", 400);
+        const redemption = await prisma.couponRedemption.findUnique({ where: { userId_code: { userId, code: couponCode } } });
+        if (redemption) throw new AppError("You have already used this coupon", 409);
+    }
+    return { ...calculateTotals(items, couponCode), couponCode };
+}
 
 // Builds an order from the user's cart. The shipping address is copied into the order,
 // the cart is split into one SellerOrder per seller, and stock is reduced.
@@ -18,6 +51,7 @@ async function createOrder(userId: string, data: CreateOrderInput) {
         throw new AppError("User ID is required to create an order", 401);
     }
 
+    const couponCode = normalizeCoupon(data.couponCode);
     const addressId = typeof data.addressId === "string" ? data.addressId : "";
     if (!addressId) {
         throw new AppError("addressId is required", 400);
@@ -54,12 +88,7 @@ async function createOrder(userId: string, data: CreateOrderInput) {
         itemsBySeller.set(item.product.sellerId, sellerItems);
     }
 
-    const itemsSubtotal = cart.cartItems.reduce(
-        (sum, item) => sum + Number(item.product.price.toString()) * item.quantity,
-        0,
-    );
-    const delivery = itemsSubtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
-    const totalAmount = itemsSubtotal + delivery;
+    const { total: totalAmount, couponDiscount } = calculateTotals(cart.cartItems, couponCode);
 
     return prisma.$transaction(async (tx) => {
         const order = await tx.order.create({
@@ -67,6 +96,8 @@ async function createOrder(userId: string, data: CreateOrderInput) {
                 userId,
                 status: OrderStatus.PENDING,
                 totalAmount,
+                couponCode,
+                couponDiscount,
                 fullname: address.fullName,
                 phone: address.phone,
                 street: address.street,
@@ -80,14 +111,14 @@ async function createOrder(userId: string, data: CreateOrderInput) {
                         sellerId,
                         status: SellerOrderStatus.PENDING,
                         subTotal: sellerItems.reduce(
-                            (sum, item) => sum + Number(item.product.price.toString()) * item.quantity,
-                            0,
+                            (sum, item) => sum.plus(effectivePrice(item.product).mul(item.quantity)),
+                            new Prisma.Decimal(0),
                         ),
                         orderItems: {
                             create: sellerItems.map((item) => ({
                                 productId: item.productId,
                                 quantity: item.quantity,
-                                unitPrice: item.product.price,
+                                unitPrice: effectivePrice(item.product),
                             })),
                         },
                     })),
@@ -128,13 +159,24 @@ async function createOrder(userId: string, data: CreateOrderInput) {
             },
         });
 
+        if (couponCode) {
+            try {
+                await tx.couponRedemption.create({ data: { userId, code: couponCode, orderId: order.id } });
+            } catch (error) {
+                if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+                    throw new AppError("You have already used this coupon", 409);
+                }
+                throw error;
+            }
+        }
+
         for (const item of cart.cartItems) {
             const updated = await tx.product.updateMany({
-                where: { id: item.productId, stock: { gte: item.quantity } },
+                where: { id: item.productId, stock: { gte: item.quantity }, price: item.product.price, discountType: item.product.discountType, discountValue: item.product.discountValue },
                 data: { stock: { decrement: item.quantity } },
             });
             if (updated.count === 0) {
-                throw new AppError(`Not enough stock for ${item.product.name}`, 400);
+                throw new AppError(`Stock or price changed for ${item.product.name}. Please refresh your cart and try again.`, 409);
             }
         }
 
@@ -256,4 +298,4 @@ async function getOrderById(orderId: string, userId: string) {
 }
 
 
-export { createOrder, getOrders, getOrderById };
+export { createOrder, getOrders, getOrderById, previewOrder };
