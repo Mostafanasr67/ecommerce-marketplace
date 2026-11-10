@@ -27,6 +27,12 @@ import SellerOrdersPage from "./pages/seller/SellerOrdersPage.tsx";
 import SellerProductsPage from "./pages/seller/SellerProductsPage";
 import SellerStoreSettingsPage from "./pages/seller/SellerStoreSettingsPage";
 import { CheckoutCouponProvider } from "./components/user/cart/CheckoutCoupon";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminSellersPage from "./pages/admin/AdminSellersPage";
+import AdminProductsPage from "./pages/admin/AdminProductsPage";
+import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
+import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 
 function subscribeToTokenChange(callback: () => void) {
 	window.addEventListener("storage", callback);
@@ -120,7 +126,7 @@ function App() {
 		const redirect = getAccessRedirect(role, requiredRole);
 		return redirect ? <Navigate to={redirect} replace /> : element;
 	};
-	const isDashboard = location.pathname === "/seller-dashboard" || location.pathname === "/admin-dashboard";
+	const isDashboard = location.pathname.startsWith("/seller-dashboard") || location.pathname.startsWith("/admin-");
 
 	function handleLogout() {
 		localStorage.removeItem("token");
@@ -294,10 +300,14 @@ function App() {
 					path="/store-settings"
 					element={authorizedPage(Role.SELLER, <SellerStoreSettingsPage onLogout={handleLogout} />)}
 				/>
-				<Route
-					path="/admin-dashboard"
-					element={authorizedPage(Role.ADMIN, <AdminDashboard />)}
-				/>
+				<Route element={authorizedPage(Role.ADMIN, <AdminLayout onLogout={handleLogout} />)}>
+					<Route path="/admin-dashboard" element={<AdminDashboard />} />
+					<Route path="/admin-users" element={<AdminUsersPage />} />
+					<Route path="/admin-sellers" element={<AdminSellersPage />} />
+					<Route path="/admin-products" element={<AdminProductsPage />} />
+					<Route path="/admin-categories" element={<AdminCategoriesPage />} />
+					<Route path="/admin-orders" element={<AdminOrdersPage />} />
+				</Route>
 			</Routes>
 			</CheckoutCouponProvider>
 

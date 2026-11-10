@@ -1,9 +1,3 @@
-function AdminDashboard() {
-	return (
-		<main>
-			<h1>Admin Dashboard</h1>
-		</main>
-	);
-}
+import AdminOverviewPage from "./AdminOverviewPage";
 
-export default AdminDashboard;
+export default AdminOverviewPage;

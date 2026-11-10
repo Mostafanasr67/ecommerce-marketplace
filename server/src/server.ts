@@ -17,6 +17,7 @@ import wishlistRoutes from "./routes/wishlist.routes.js";
 import errorHandler from "./middleware/error.middleware.js";
 import logger from "./middleware/logger.middleware.js";
 import sellerRoutes from "./routes/seller.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 
 const app = express();
 
@@ -37,10 +38,10 @@ app.use("/addresses", addressRoutes);
 app.use("/cards", cardRoutes);
 app.use("/orders", orderRoutes);
 app.use("/seller", sellerRoutes);
+app.use("/admin", adminRoutes);
 app.use(errorHandler);
 
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-

@@ -15,7 +15,7 @@ function OrderPage() {
         const loadLastOrder = async () => {
             const orders = await fetchOrders();
             if (orders.length > 0) {
-                setOrder(orders.at(-1) || null);
+                setOrder(orders[0] ?? null);
             }
         };
         loadLastOrder();

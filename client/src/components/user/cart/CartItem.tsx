@@ -16,8 +16,12 @@ function CartItem({
 	toggleWishlist,
 }: CartItemProps) {
 	const { name, price } = item.product;
-	const savings =
-		item.originalPrice !== undefined ? item.originalPrice - price : 0;
+	const originalPrice = item.originalPrice;
+	const hasDiscount =
+		originalPrice !== undefined &&
+		Number.isFinite(originalPrice) &&
+		originalPrice > price;
+	const savings = hasDiscount ? originalPrice - price : 0;
 
 	return (
 		<article className="flex flex-col gap-space-lg p-space-lg md:flex-row">
@@ -66,13 +70,13 @@ function CartItem({
 							</span>
 						</div>
 
-						{item.originalPrice !== undefined && (
+						{hasDiscount && (
 							<div className="flex items-center gap-space-xs sm:justify-end">
 								<span className="text-body-sm text-outline line-through">
-									{item.originalPrice.toLocaleString("en-EG")} EGP
+									{originalPrice.toLocaleString("en-EG")} EGP
 								</span>
 								<span className="rounded bg-error/10 px-1.5 py-0.5 text-label-sm font-bold text-error">
-									{Math.round((savings / item.originalPrice) * 100)}% OFF
+									{Math.max(1, Math.round((savings / originalPrice) * 100))}% OFF
 								</span>
 							</div>
 						)}
@@ -116,11 +120,11 @@ function CartItem({
 						</button>
 						<button
 							type="button"
-							onClick={()=>{toggleWishlist(item.productId)}}
+							onClick={() => toggleWishlist(item.productId)}
 							className="flex items-center gap-space-xs text-on-surface-variant transition-colors hover:text-primary"
 						>
 							<span aria-hidden="true">{wishlist.includes(item.productId) ? "♥" : "♡"}</span>
-							<span>Save for Later</span>
+							<span>{wishlist.includes(item.productId) ? "Saved for Later" : "Save for Later"}</span>
 						</button>
 					</div>
 				</div>

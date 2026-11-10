@@ -1,20 +1,31 @@
 import { Link, useLocation } from "react-router-dom";
 
-const navigationItems = [
+const sellerNavigationItems = [
 	{ label: "Overview", icon: "grid_view", href: "/seller-dashboard"},
 	{ label: "Products", icon: "inventory_2", href: "/seller-products"},
 	{ label: "Orders", icon: "shopping_bag", href: "/seller-orders"},
 	{ label: "Store Settings", icon: "tune", href: "/store-settings"},
 ];
 
-function SellerSidebar({ onLogout }: { onLogout: () => void }) {
+const adminNavigationItems = [
+	{ label: "Overview", icon: "grid_view", href: "/admin-dashboard"},
+	{ label: "Users", icon: "group", href: "/admin-users"},
+	{ label: "Sellers", icon: "storefront", href: "/admin-sellers"},
+	{ label: "Products", icon: "inventory_2", href: "/admin-products"},
+	{ label: "Categories", icon: "category", href: "/admin-categories"},
+	{ label: "Orders", icon: "shopping_bag", href: "/admin-orders"},
+];
+
+function SellerSidebar({ onLogout, role = "seller" }: { onLogout: () => void; role?: "seller" | "admin" }) {
 	const location = useLocation();
+	const navigationItems = role === "admin" ? adminNavigationItems : sellerNavigationItems;
+	const dashboardPath = role === "admin" ? "/admin-dashboard" : "/seller-dashboard";
 	return (
 		<aside className="fixed left-0 top-0 z-50 flex h-full w-72 flex-col justify-between bg-surface-container-lowest font-body-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
 			<div className="flex flex-col">
 				<div className="flex h-20 items-center justify-between px-space-lg">
 					<div className="flex items-center gap-space-sm">
-						<Link to="/seller-dashboard" className="shrink-0 flex items-center gap-space-md hover:opacity-80 transition-opacity">
+						<Link to={dashboardPath} className="shrink-0 flex items-center gap-space-md hover:opacity-80 transition-opacity">
 						<div>
 							<span className="font-headline-md font-bold tracking-tight block">
 								SOVEREIGN
@@ -26,25 +37,25 @@ function SellerSidebar({ onLogout }: { onLogout: () => void }) {
 					</Link>
 					</div>
 					<span className="rounded-full bg-secondary-container px-2 py-0.5 font-label-sm text-on-secondary-fixed">
-						HUB
+						{role === "admin" ? "ADMIN" : "HUB"}
 					</span>
 				</div>
 
 				<div className="mt-6 px-space-md py-space-sm">
-					<nav className="flex flex-col gap-1" aria-label="Seller navigation">
+					<nav className="flex flex-col gap-1" aria-label={`${role === "admin" ? "Admin" : "Seller"} navigation`}>
 						{navigationItems.map((item) => (
 							<Link
 								key={item.label}
 								to={item.href}
 								className={`group flex items-center gap-space-sm rounded-xl px-space-md py-3 font-label-lg text-label-lg font-semibold transition-colors ${
-									location.pathname === item.href
+									(location.pathname === item.href || (item.href !== dashboardPath && location.pathname.startsWith(`${item.href}/`)))
 										? "bg-primary text-on-primary!"
 										: "text-on-surface-variant! hover:bg-surface-container-low hover:text-on-surface!"
 								}`}
 								aria-current={location.pathname === item.href ? "page" : undefined}
 							>
 								<span className={`material-symbols-outlined text-xl ${
-									location.pathname === item.href ? "text-on-primary" : "text-outline group-hover:text-primary"
+									(location.pathname === item.href || (item.href !== dashboardPath && location.pathname.startsWith(`${item.href}/`))) ? "text-on-primary" : "text-outline group-hover:text-primary"
 								}`}>{item.icon}</span>
 								{item.label}
 							</Link>

@@ -49,7 +49,7 @@ function PackageSection({
 			</div>
 
 			{items.map((item, index) => (
-				<div key={item.name} className="flex flex-col gap-space-md">
+				<div key={item.id} className="flex flex-col gap-space-md">
 					<OrderItemRow item={item} tone={tone} />
 					{index < items.length - 1 && <div className="h-px w-full bg-surface-container-high" />}
 				</div>

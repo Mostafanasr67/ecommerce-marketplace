@@ -23,12 +23,11 @@ function PurchasedItems({order}: {order: Order}) {
 			trackingCode: sellerOrder.id,
 			tone,
 			items: (sellerOrder.orderItems ?? []).map((item) => ({
+				id: item.id,
 				name: item.product?.name ?? `Product ${item.productId}`,
 				quantity: item.quantity,
 				price: typeof item.unitPrice === "number" ? item.unitPrice.toString() : item.unitPrice,
 				image: item.product?.productImages?.[0]?.url ?? "",
-				sellerName: `Seller ${sellerOrder.sellerId}`,
-				sellerIcon: "factory" as const,
 				details: `SKU: ${item.productId}`,
 			})),
 		};

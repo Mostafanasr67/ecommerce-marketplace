@@ -4,9 +4,8 @@ import { TONE_STYLES } from "./orderTone";
 import type { Tone } from "./orderTone";
 
 type OrderItemView = {
+	id: string;
 	image: string;
-	sellerName: string;
-	sellerIcon: IconName;
 	name: string;
 	details: string;
 	highlightIcon?: IconName;
@@ -31,10 +30,6 @@ function OrderItemRow({ item, tone }: OrderItemRowProps) {
 					<img src={item.image} alt={item.name} className="h-full w-full object-cover" />
 				</div>
 				<div className="flex min-w-0 flex-col">
-					<div className="flex items-center gap-space-xs font-label-sm text-label-sm text-outline">
-						<OrderIcon name={item.sellerIcon} className={`h-4 w-4 ${styles.text}`} />
-						<span>{item.sellerName}</span>
-					</div>
 					<h3 className="truncate font-title-md text-title-md font-bold text-on-surface">{item.name}</h3>
 					<p className="truncate font-body-sm text-body-sm text-on-surface-variant">{item.details}</p>
 					<div className="mt-1 flex items-center gap-space-md">

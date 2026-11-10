@@ -1,5 +1,5 @@
 import prisma from "../prisma.js";
-import { SellerOrderStatus } from "../../generated/prisma/enums.js";
+import { OrderStatus, SellerOrderStatus } from "../../generated/prisma/enums.js";
 import AppError from "../utils/appError.js";
 import { Prisma } from "../../generated/prisma/client.js";
 import { effectivePrice } from "../utils/productPricing.js";
@@ -10,6 +10,15 @@ type ProductDetailsUpdate = {
     categoryId: string;
     discountType: "PERCENT" | "FIXED" | null;
     discountValue: number | null;
+};
+
+const parentOrderStatusBySellerStatus: Record<SellerOrderStatus, OrderStatus> = {
+    [SellerOrderStatus.PENDING]: OrderStatus.PENDING,
+    [SellerOrderStatus.CONFIRMED]: OrderStatus.CONFIRMED,
+    [SellerOrderStatus.PROCESSING]: OrderStatus.PROCESSING,
+    [SellerOrderStatus.SHIPPED]: OrderStatus.SHIPPED,
+    [SellerOrderStatus.DELIVERED]: OrderStatus.DELIVERED,
+    [SellerOrderStatus.CANCELLED]: OrderStatus.CANCELLED,
 };
 
 async function getSeller(userId: string) {
@@ -143,6 +152,13 @@ async function updateSellerOrderStatus(sellerId: string, orderId: string, status
                     throw new AppError(`Not enough stock to reopen this order: ${item.product.name}`, 409);
                 }
             }
+        }
+        const sellerOrderCount = await tx.sellerOrder.count({ where: { orderId: order.orderId } });
+        if (sellerOrderCount === 1) {
+            await tx.order.update({
+                where: { id: order.orderId },
+                data: { status: parentOrderStatusBySellerStatus[status] },
+            });
         }
         return { id: order.id, status };
     });
