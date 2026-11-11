@@ -8,6 +8,7 @@ type ProductCardProps = {
 	oldPrice?: number;
 	originalPrice?: string | number;
 	rating?: number;
+	reviewCount?: number;
 	seller: string | { storeName: string };
 	badge?: string;
 	wishlist: string[];
@@ -22,6 +23,7 @@ function ProductCard({
 	oldPrice,
 	originalPrice,
 	rating,
+	reviewCount,
 	seller,
 	badge,
 	wishlist,
@@ -85,7 +87,11 @@ function ProductCard({
 				</h3>
 
 				<p className="mb-space-sm text-label-md text-on-surface-variant">
-					★ {rating ? rating.toFixed(1) : "N/A"}
+					{reviewCount === undefined
+						? `★ ${rating ? rating.toFixed(1) : "N/A"}`
+						: reviewCount > 0
+							? `★ ${rating?.toFixed(1) ?? "0.0"} (${reviewCount} review${reviewCount === 1 ? "" : "s"})`
+							: "No reviews yet"}
 				</p>
 
 				<div className="flex flex-wrap items-baseline gap-space-sm">

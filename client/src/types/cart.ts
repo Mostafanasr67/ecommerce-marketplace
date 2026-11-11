@@ -24,6 +24,7 @@ export type Product = {
 		id: string;
 		productId: string;
 		url: string;
+		publicId: string | null;
 		altText: string;
 		sortOrder: number;
 		createdAt: string;

@@ -18,6 +18,7 @@ import errorHandler from "./middleware/error.middleware.js";
 import logger from "./middleware/logger.middleware.js";
 import sellerRoutes from "./routes/seller.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import reviewRoutes from "./routes/review.routes.js";
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use("/cards", cardRoutes);
 app.use("/orders", orderRoutes);
 app.use("/seller", sellerRoutes);
 app.use("/admin", adminRoutes);
+app.use("/reviews", reviewRoutes);
 app.use(errorHandler);
 
 

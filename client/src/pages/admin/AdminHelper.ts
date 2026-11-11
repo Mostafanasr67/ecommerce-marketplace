@@ -48,6 +48,13 @@ async function fetchAdminUsers(params: { page: number; search: string }) {
 	return request<AdminPageResult<AdminUser>>(`/admin/users?${queryString({ ...params, limit: 10 })}`);
 }
 
+async function updateAdminUserRole(userId: string, role: AdminUser["role"], storeName?: string) {
+	return request<AdminUser>(`/admin/users/${encodeURIComponent(userId)}/role`, {
+		method: "PATCH",
+		body: JSON.stringify({ role, ...(storeName ? { storeName } : {}) }),
+	});
+}
+
 async function fetchAdminSellers(params: { page: number; search: string }) {
 	return request<AdminPageResult<AdminSeller>>(`/admin/sellers?${queryString({ ...params, limit: 10 })}`);
 }
@@ -91,6 +98,7 @@ export {
 	fetchAdminIdentity,
 	fetchAdminOverview,
 	fetchAdminUsers,
+	updateAdminUserRole,
 	fetchAdminSellers,
 	fetchAdminProducts,
 	fetchAdminCategories,

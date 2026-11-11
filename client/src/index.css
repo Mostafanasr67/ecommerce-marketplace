@@ -71,21 +71,21 @@
   --color-inverse-primary: #b4c5ff;
 
   /* Typography */
-  --font-headline-xl: "Plus Jakarta Sans", sans-serif;
-  --font-headline-lg: "Plus Jakarta Sans", sans-serif;
-  --font-headline-md: "Plus Jakarta Sans", sans-serif;
-  --font-headline-sm: "Plus Jakarta Sans", sans-serif;
-  --font-headline-xl-mobile: "Plus Jakarta Sans", sans-serif;
-  --font-headline-lg-mobile: "Plus Jakarta Sans", sans-serif;
-  --font-body-lg: "Plus Jakarta Sans", sans-serif;
-  --font-body-md: "Plus Jakarta Sans", sans-serif;
-  --font-body-sm: "Plus Jakarta Sans", sans-serif;
-  --font-title-md: "Plus Jakarta Sans", sans-serif;
-  --font-price-lg: "Plus Jakarta Sans", sans-serif;
-  --font-price-sm: "Plus Jakarta Sans", sans-serif;
-  --font-label-lg: "Inter", sans-serif;
-  --font-label-md: "Inter", sans-serif;
-  --font-label-sm: "Inter", sans-serif;
+  --font-headline-xl: "Lora", Georgia, serif;
+  --font-headline-lg: "Lora", Georgia, serif;
+  --font-headline-md: "Lora", Georgia, serif;
+  --font-headline-sm: "Lora", Georgia, serif;
+  --font-headline-xl-mobile: "Lora", Georgia, serif;
+  --font-headline-lg-mobile: "Lora", Georgia, serif;
+  --font-body-lg: "DM Sans", sans-serif;
+  --font-body-md: "DM Sans", sans-serif;
+  --font-body-sm: "DM Sans", sans-serif;
+  --font-title-md: "Lora", Georgia, serif;
+  --font-price-lg: "DM Sans", sans-serif;
+  --font-price-sm: "DM Sans", sans-serif;
+  --font-label-lg: "DM Sans", sans-serif;
+  --font-label-md: "DM Sans", sans-serif;
+  --font-label-sm: "DM Sans", sans-serif;
 
   /* Custom spacing used by the Stitch design */
   --spacing-gutter-mobile: 0.75rem;
@@ -169,7 +169,7 @@
 
 
 :root {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "DM Sans", sans-serif;
   color: #172033;
   background: #ffffff;
   font-synthesis: none;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useSyncExternalStore } from "react";
+import { useState, useEffect, useLayoutEffect, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import type { Address } from "./components/user/address/AddressHelper";
 import { Routes, Route, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -51,6 +51,9 @@ function App() {
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const location = useLocation();
+	useLayoutEffect(() => {
+		window.scrollTo(0, 0);
+	}, [location.pathname]);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [categoryQuery, setCategoryQuery] = useState("");
 	const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);

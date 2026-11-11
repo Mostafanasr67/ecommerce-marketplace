@@ -5,12 +5,14 @@ import ProductInventoryCard from "../../components/seller/products/ProductInvent
 import AddProductDialog from "../../components/seller/products/AddProductDialog";
 import type { SellerProduct } from "../../types/seller";
 import { getCurrentUserId } from "../../utils/currentUser";
-import { fetchSeller, fetchSellerProducts, fetchProductCategories, createSellerProduct, updateSellerProductStock, updateSellerProductDetails } from "./SellerHelper";
-import type { SellerProductDetails } from "./SellerHelper";
+import { fetchSeller, fetchSellerProducts, fetchProductCategories, createSellerProduct, updateSellerProductStock, updateSellerProductDetails, updateSellerProductImages } from "./SellerHelper";
+import type { ProductImageAsset, SellerProductDetails } from "./SellerHelper";
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 function SellerProductsPage({ onLogout }: { onLogout: () => void }) {
-	const [addingProduct, setAddingProduct] = useState(false);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const [addingProduct, setAddingProduct] = useState(searchParams.get("addProduct") === "1");
 	const userId = getCurrentUserId();
 	const queryClient = useQueryClient();
 	const sellerQuery = useQuery({
@@ -57,12 +59,29 @@ function SellerProductsPage({ onLogout }: { onLogout: () => void }) {
 		}
 	}
 
+	async function handleSaveImages(productId: string, expectedUpdatedAt: string, images: ({ id: string } | ProductImageAsset)[]) {
+		if (!seller) throw new Error("Seller profile is not available.");
+		try {
+			await updateSellerProductImages(seller.id, productId, expectedUpdatedAt, images);
+		} finally {
+			await queryClient.invalidateQueries({ queryKey: productsKey });
+		}
+	}
+
 	async function handleCreateProduct(product: Parameters<typeof createSellerProduct>[0]) {
 		await createSellerProduct(product);
 		await queryClient.invalidateQueries({ queryKey: productsKey });
 	}
 
 	const products = productsQuery.data;
+	function closeAddProductDialog() {
+		setAddingProduct(false);
+		if (searchParams.has("addProduct")) {
+			const nextParams = new URLSearchParams(searchParams);
+			nextParams.delete("addProduct");
+			setSearchParams(nextParams, { replace: true });
+		}
+	}
 
 	return (
 		<div className="min-h-screen bg-background font-body-md text-on-surface antialiased">
@@ -89,7 +108,7 @@ function SellerProductsPage({ onLogout }: { onLogout: () => void }) {
 								categories={categoriesQuery.data ?? []}
 								categoriesLoading={categoriesQuery.isPending}
 								categoriesError={categoriesQuery.isError ? `Failed to load categories: ${categoriesQuery.error.message}` : undefined}
-								onClose={() => setAddingProduct(false)}
+								onClose={closeAddProductDialog}
 								onCreate={handleCreateProduct}
 							/>
 						)}
@@ -105,7 +124,7 @@ function SellerProductsPage({ onLogout }: { onLogout: () => void }) {
 									<p className="rounded-xl bg-surface-container-lowest p-space-lg text-on-surface-variant">You have no products yet.</p>
 								) : (
 									<div className="flex flex-col gap-space-md">
-										{products.map((product) => <ProductInventoryCard key={product.id} product={product} categories={categoriesQuery.data ?? []} categoriesLoading={categoriesQuery.isPending} onSaveStock={handleSaveStock} onSaveDetails={handleSaveDetails} />)}
+										{products.map((product) => <ProductInventoryCard key={product.id} product={product} categories={categoriesQuery.data ?? []} categoriesLoading={categoriesQuery.isPending} onSaveStock={handleSaveStock} onSaveDetails={handleSaveDetails} onSaveImages={handleSaveImages} />)}
 									</div>
 								)
 							)}

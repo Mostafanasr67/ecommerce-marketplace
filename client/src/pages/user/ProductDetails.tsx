@@ -1,10 +1,18 @@
 import { useParams } from "react-router-dom";
 import { products } from "../../data/products";
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import ProductCard from "../../components/user/products/ProductCard";
 import { addCartItem } from "../../components/user/cart/CartHelper";
+import ProductReviews from "../../components/user/product/ProductReviews";
+import { fetchProductReviews } from "../../components/user/product/ReviewHelper";
 
+type ProductDetailsData = Omit<typeof products[number], "category" | "seller"> & {
+	category: string;
+	seller: string;
+	description: string | null;
+	images: string[];
+};
 
 type ProductDetailsProps = {
 	wishlist: string[];
@@ -15,24 +23,43 @@ type ProductDetailsProps = {
 function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 	const { id } = useParams();
 	const [quantity, setQuantity] = useState(1);
-	const [product, setProduct] = useState<typeof products[0] | undefined>();
-	const [selectedImage, setSelectedImage] = useState(product?.image || "");
+	const [product, setProduct] = useState<ProductDetailsData | undefined>();
+	const [selectedImage, setSelectedImage] = useState("");
+	const reviewsQuery = useQuery({
+		queryKey: ["product-reviews", id],
+		queryFn: () => fetchProductReviews(id!),
+		enabled: Boolean(id),
+	});
 
 	useEffect(() => {
 		fetch(`http://localhost:5000/products/${id}`)
-			.then((res) => res.json())
-			.then((data) => setProduct({
-				...data,
-				price: Number(data.price),
-				oldPrice: Number(data.originalPrice) > Number(data.price) ? Number(data.originalPrice) : undefined,
-			}));
+			.then((res) => {
+				if (!res.ok) {
+					throw new Error(`Failed to load product (${res.status})`);
+				}
+				return res.json();
+			})
+			.then((data) => {
+				const images = (data.productImages ?? []).map(
+					(image: { url: string }) => image.url,
+				);
+				const loadedProduct = {
+					...data,
+					category: data.category?.name ?? "Uncategorized",
+					seller: data.seller?.storeName ?? "Marketplace",
+					image: images[0] ?? "",
+					images,
+					price: Number(data.price),
+					oldPrice: Number(data.originalPrice) > Number(data.price) ? Number(data.originalPrice) : undefined,
+				};
+				setProduct(loadedProduct);
+				setSelectedImage(loadedProduct.image || "");
+			})
+			.catch((error: unknown) => {
+				console.error("Failed to load product details:", error);
+				setProduct(undefined);
+			});
 	}, [id]);
-
-	useEffect(() => {
-		if (product?.image) {
-			setSelectedImage(product.image);
-		}
-	}, [product]);
 
 	const queryClient = useQueryClient();
 	const addItemMutation = useMutation({
@@ -88,24 +115,27 @@ function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 							</div>
 
 							{/* Image thumbnails */}
-							<div className="flex gap-space-md">
-								<button
-									type="button"
-									onClick={() => setSelectedImage(product.image)}
-									aria-label={`View ${product.name}`}
-									aria-pressed={selectedImage === product.image}
-									className={`h-20 w-20 overflow-hidden rounded-lg border-2 p-space-xs ${
-										selectedImage === product.image
-											? "border-primary"
-											: "border-outline-variant"
-									}`}
-								>
-									<img
-										src={product.image}
-										alt=""
-										className="h-full w-full object-contain"
-									/>
-								</button>
+							<div className="flex gap-space-md overflow-x-auto">
+								{product.images.map((image, index) => (
+									<button
+										key={`${image}-${index}`}
+										type="button"
+										onClick={() => setSelectedImage(image)}
+										aria-label={`View ${product.name} image ${index + 1}`}
+										aria-pressed={selectedImage === image}
+										className={`h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 p-space-xs ${
+											selectedImage === image
+												? "border-primary"
+												: "border-outline-variant"
+										}`}
+									>
+										<img
+											src={image}
+											alt=""
+											className="h-full w-full object-contain"
+										/>
+									</button>
+								))}
 							</div>
 						</div>
 					</div>
@@ -119,7 +149,9 @@ function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 						<h1 className="text-headline-lg font-bold">{product.name}</h1>
 
 						<p className="text-body-md text-on-surface-variant">
-							★ {product.rating} / 5
+							<span className="material-symbols-outlined mr-1 align-middle text-amber-500" aria-hidden="true">star</span>
+							{reviewsQuery.data?.averageRating.toFixed(1) ?? "0.0"} / 5
+							<span className="ml-1">({reviewsQuery.data?.totalReviews ?? 0} reviews)</span>
 						</p>
 
 						<div className="flex flex-wrap items-center gap-space-md">
@@ -157,7 +189,13 @@ function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 										: "text-on-surface hover:text-error"
 								}`}
 							>
-								{wishlist.includes(product.id) ? "♥" : "♡"}
+								<span
+									className="material-symbols-outlined"
+									style={wishlist.includes(product.id) ? { fontVariationSettings: '"FILL" 1' } : undefined}
+									aria-hidden="true"
+								>
+									{wishlist.includes(product.id) ? "favorite" : "favorite_border"}
+								</span>
 							</button>
 						</div>
 
@@ -181,7 +219,7 @@ function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 									}
 									className="px-space-md py-space-sm text-lg disabled:opacity-40"
 								>
-									−
+									<span className="material-symbols-outlined" aria-hidden="true">remove</span>
 								</button>
 
 								<span
@@ -197,7 +235,7 @@ function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 									onClick={() => setQuantity((current) => current + 1)}
 									className="px-space-md py-space-sm text-lg"
 								>
-									+
+									<span className="material-symbols-outlined" aria-hidden="true">add</span>
 								</button>
 							</div>
 						</div>
@@ -207,14 +245,17 @@ function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 							onClick={() => addItem(product.id, quantity)}
 							className="w-full rounded-lg bg-primary px-space-lg py-space-md font-semibold text-white transition-colors hover:bg-primary-container sm:w-fit"
 						>
-							Add to Cart
+							<span className="inline-flex items-center gap-space-sm">
+								<span className="material-symbols-outlined" aria-hidden="true">shopping_cart</span>
+								Add to Cart
+							</span>
 						</button>
 
 						<div className="mt-space-md mb-space-xl space-y-space-md rounded-xl border border-outline-variant p-space-md">
 							{/* Delivery information */}
 							<div className="flex items-start gap-space-md">
-								<span className="text-xl" aria-hidden="true">
-									🚚
+								<span className="material-symbols-outlined text-2xl text-primary" aria-hidden="true">
+									local_shipping
 								</span>
 
 								<div>
@@ -233,8 +274,8 @@ function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 
 							{/* Returns information */}
 							<div className="flex items-start gap-space-md">
-								<span className="text-xl" aria-hidden="true">
-									↩️
+								<span className="material-symbols-outlined text-2xl text-primary" aria-hidden="true">
+									assignment_return
 								</span>
 
 								<div>
@@ -253,8 +294,8 @@ function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 
 							{/* Buyer protection */}
 							<div className="flex items-start gap-space-md">
-								<span className="text-xl" aria-hidden="true">
-									🛡️
+								<span className="material-symbols-outlined text-2xl text-primary" aria-hidden="true">
+									shield
 								</span>
 
 								<div>
@@ -281,9 +322,7 @@ function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 					<h3 className="text-title-lg font-semibold">Description</h3>
 
 					<p className="mt-space-sm leading-7 text-on-surface-variant">
-						Discover the details of {product.name}, available from{" "}
-						{product.seller}. Explore its features and choose the product that
-						best suits your needs.
+						{product.description || `Discover the details of ${product.name}, available from ${product.seller}. Explore its features and choose the product that best suits your needs.`}
 					</p>
 				</div>
 
@@ -317,58 +356,7 @@ function ProductDetails({ wishlist, toggleWishlist }: ProductDetailsProps) {
 				</div>
 			</section>
 
-			{/* Customer Reviews Section */}
-			<section className="mt-12 border-t border-outline-variant/30 pt-8">
-				<h2 className="text-2xl font-bold text-on-surface">Customer Reviews</h2>
-
-				<div className="mt-6 grid gap-8 md:grid-cols-[220px_1fr]">
-					<div>
-						<p className="text-5xl font-bold text-on-surface">
-							{product.rating?.toFixed(1)}
-							<span className="text-lg text-on-surface-variant">/5</span>
-						</p>
-
-						<div
-							className="mt-2 text-lg text-amber-500"
-							aria-label={`${product.rating ?? 0} out of 5 stars`}
-						>
-							{"★".repeat(Math.round(product.rating ?? 0))}
-							{"☆".repeat(5 - Math.round(product.rating ?? 0))}
-						</div>
-
-						<p className="mt-2 text-sm text-on-surface-variant">
-							Based on the product's displayed rating
-						</p>
-					</div>
-
-					<div className="space-y-5">
-						<article className="border-b border-outline-variant/30 pb-5">
-							<div className="flex items-center justify-between gap-4">
-								<h3 className="font-semibold text-on-surface">
-									Sample Customer
-								</h3>
-
-								<span className="text-sm text-on-surface-variant">
-									Example review
-								</span>
-							</div>
-
-							<div
-								className="mt-2 text-amber-500"
-								aria-label="5 out of 5 stars"
-							>
-								★★★★★
-							</div>
-
-							<p className="mt-3 text-sm leading-6 text-on-surface-variant">
-								This is placeholder review content for the page design. Real
-								customer reviews will be connected when we implement the
-								backend.
-							</p>
-						</article>
-					</div>
-				</div>
-			</section>
+			<ProductReviews productId={product.id} />
 
 					{/* Related Products Section */}
 			<section className="mt-12 border-t border-outline-variant/30 pt-8">

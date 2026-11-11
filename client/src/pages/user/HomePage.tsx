@@ -18,13 +18,13 @@ function HomePage({
 }) {
 	return (
 		<main className="min-h-screen bg-surface">
-							<Hero />
-							<Categories onCategorySelect={onCategorySelect} />
+							<Hero onCategorySelect={onCategorySelect} />
 							<FeaturedProducts
 								searchQuery={searchQuery}
 								categoryQuery={categoryQuery}
 								wishlist={wishlist}
 								toggleWishlist={toggleWishlist}
+								productsPerPage={4}
 							/>
 							<RecentlyAdded
 								wishlist={wishlist}

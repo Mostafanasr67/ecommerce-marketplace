@@ -1,7 +1,8 @@
 import type { Request, Response } from "express";
 import type { UpdateProductData, ProductFilters } from "../services/product.service.js";
-import { getAllProducts as getAllProductsService, getProductById as getProductByIdService, createProduct as createProductService, updateProduct as updateProductService, deleteProduct as deleteProductService } from "../services/product.service.js";
+import { getAllProducts as getAllProductsService, getProductById as getProductByIdService, isProductImageAttached, createProduct as createProductService, updateProduct as updateProductService, deleteProduct as deleteProductService } from "../services/product.service.js";
 import { customerProduct } from "../utils/productPricing.js";
+import { deleteProductImage, isOwnedProductImage, uploadProductImage } from "../utils/cloudinary.js";
 
 async function getAllProducts(req: Request, res: Response) {
 
@@ -12,6 +13,7 @@ async function getAllProducts(req: Request, res: Response) {
     const categoryIdsQuery = req.query.categoryIds;
     const excludeProductIdsQuery = req.query.excludeProductIds;
     const sellerId = req.query.sellerId;
+    const hasDiscountQuery = req.query.hasDiscount;
     const sortBy = req.query.sortBy;
     const sortOrder = req.query.sortOrder;
 
@@ -27,6 +29,11 @@ async function getAllProducts(req: Request, res: Response) {
 
     if (search !== undefined && typeof search !== "string" || categoryId !== undefined && typeof categoryId !== "string" || categoryIdsQuery !== undefined && typeof categoryIdsQuery !== "string" || excludeProductIdsQuery !== undefined && typeof excludeProductIdsQuery !== "string" || sellerId !== undefined && typeof sellerId !== "string") {
         res.status(400).json({ error: "Search, categoryId, categoryIds, excludeProductIds, and sellerId must be strings" });
+        return;
+    }
+
+    if (hasDiscountQuery !== undefined && hasDiscountQuery !== "true" && hasDiscountQuery !== "false") {
+        res.status(400).json({ error: "hasDiscount must be true or false" });
         return;
     }
 
@@ -67,6 +74,7 @@ async function getAllProducts(req: Request, res: Response) {
         ...(categoryIds ? { categoryIds } : {}),
         ...(excludeProductIds ? { excludeProductIds } : {}),
         ...(sellerId ? { sellerId } : {}),
+        ...(hasDiscountQuery === "true" ? { hasDiscount: true } : {}),
         ...(sortBy ? { sortBy } : {}),
         ...(sortOrder ? { sortOrder } : {}),
     };
@@ -94,7 +102,7 @@ async function getProductById(req: Request, res: Response) {
 }
 
 async function createProduct(req: Request, res: Response) {
-    const { name, description, price, stock, categoryId, discountType, discountValue } = req.body;
+    const { name, description, price, stock, categoryId, discountType, discountValue, images } = req.body;
     const userId = req.user?.id;
     const normalizedDiscountType = discountType ?? null;
     const normalizedDiscountValue = discountValue ?? null;
@@ -132,19 +140,79 @@ async function createProduct(req: Request, res: Response) {
         return;
     }
 
+    if (images !== undefined && (
+        !Array.isArray(images) ||
+        images.length > 5 ||
+        images.some((image: unknown) =>
+            typeof image !== "object" || image === null ||
+            !("url" in image) || typeof image.url !== "string" ||
+            !("publicId" in image) || typeof image.publicId !== "string" ||
+            !isOwnedProductImage(image.url, image.publicId, userId)
+        )
+    )) {
+        res.status(400).json({ error: "Product images must be valid images uploaded to your seller account (maximum 5)." });
+        return;
+    }
 
-    const product = await createProductService(
-        name.trim(),
-        description ?? null,
-        price,
-        stock,
-        categoryId.trim(),
-        userId,
-        normalizedDiscountType,
-        normalizedDiscountValue,
-    );
+    let product;
+    try {
+        product = await createProductService(
+            name.trim(),
+            description ?? null,
+            price,
+            stock,
+            categoryId.trim(),
+            userId,
+            normalizedDiscountType,
+            normalizedDiscountValue,
+            images ?? [],
+        );
+    } catch (error) {
+        if (Array.isArray(images) && images.length > 0) {
+            const cleanup = await Promise.allSettled(
+                images.map((image: { publicId: string }) => deleteProductImage(image.publicId, userId)),
+            );
+            for (const result of cleanup) {
+                if (result.status === "rejected") console.error("Failed to clean up uploaded product image:", result.reason);
+            }
+        }
+        throw error;
+    }
     res.status(201).json(product);
 
+}
+
+async function uploadProductImageController(req: Request, res: Response) {
+    const userId = req.user?.id;
+    if (!userId) {
+        res.status(401).json({ error: "User not authenticated" });
+        return;
+    }
+    if (!req.file) {
+        res.status(400).json({ error: "Select an image to upload." });
+        return;
+    }
+    const image = await uploadProductImage(req.file.buffer, userId);
+    res.status(201).json({ url: image.secure_url, publicId: image.public_id });
+}
+
+async function deleteProductImageController(req: Request, res: Response) {
+    const userId = req.user?.id;
+    const publicId: unknown = req.body?.publicId;
+    if (!userId) {
+        res.status(401).json({ error: "User not authenticated" });
+        return;
+    }
+    if (typeof publicId !== "string" || !publicId.trim()) {
+        res.status(400).json({ error: "Image public ID is required." });
+        return;
+    }
+    if (await isProductImageAttached(publicId)) {
+        res.status(409).json({ error: "This image is attached to a product. Remove it through product image management." });
+        return;
+    }
+    await deleteProductImage(publicId, userId);
+    res.status(204).end();
 }
 
 
@@ -242,4 +310,4 @@ async function deleteProduct(req: Request, res: Response) {
     res.json(deletedProduct);
 }
 
-export { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct };
+export { getAllProducts, getProductById, createProduct, uploadProductImageController, deleteProductImageController, updateProduct, deleteProduct };

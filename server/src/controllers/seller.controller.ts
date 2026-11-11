@@ -1,7 +1,8 @@
-import { getSeller, updateSellerStoreName, getSellerProducts, getSellerOrders, updateSellerOrderStatus, updateSellerProductStock, updateSellerProductDetails } from "../services/seller.service.js";
+import { getSeller, updateSellerStoreName, getSellerProducts, getSellerOrders, updateSellerOrderStatus, updateSellerProductStock, updateSellerProductDetails, updateSellerProductImages } from "../services/seller.service.js";
 import type { Request, Response } from "express";
 import { SellerOrderStatus } from "../../generated/prisma/enums.js";
 import AppError from "../utils/appError.js";
+import { isOwnedProductImage } from "../utils/cloudinary.js";
 
 async function getOwnedSeller(req: Request) {
     if (!req.user) throw new AppError("Unauthorized", 401);
@@ -81,6 +82,43 @@ async function updateSellerProductDetailsById(req: Request, res: Response) {
     res.json(updated);
 }
 
+async function updateSellerProductImagesById(req: Request, res: Response) {
+    const { sellerId, productId } = req.params as { sellerId: string; productId: string };
+    const seller = await getOwnedSeller(req);
+    if (seller.id !== sellerId) throw new AppError("Forbidden", 403);
+
+    const { images, expectedUpdatedAt } = req.body ?? {};
+    if (!Array.isArray(images) || images.length > 5) {
+        throw new AppError("Provide up to five product images.", 400);
+    }
+    if (typeof expectedUpdatedAt !== "string" || Number.isNaN(Date.parse(expectedUpdatedAt))) {
+        throw new AppError("Valid product version is required", 400);
+    }
+
+    const normalizedImages = images.map((image: unknown) => {
+        if (typeof image !== "object" || image === null) {
+            throw new AppError("Invalid product image.", 400);
+        }
+        if ("id" in image) {
+            if (typeof image.id !== "string" || !image.id) throw new AppError("Invalid product image ID.", 400);
+            return { id: image.id };
+        }
+        if (!("url" in image) || typeof image.url !== "string" ||
+            !("publicId" in image) || typeof image.publicId !== "string" ||
+            !isOwnedProductImage(image.url, image.publicId, req.user!.id)) {
+            throw new AppError("New images must be uploaded to your Cloudinary seller folder.", 400);
+        }
+        return { url: image.url, publicId: image.publicId };
+    });
+    const updated = await updateSellerProductImages(
+        seller.id,
+        productId,
+        new Date(expectedUpdatedAt),
+        normalizedImages,
+    );
+    res.json(updated);
+}
+
 async function getSellerOrdersBySellerId(req: Request, res: Response) {
     const { sellerId } = req.params as { sellerId: string };
     const seller = await getOwnedSeller(req);
@@ -101,4 +139,4 @@ async function updateSellerOrderStatusById(req: Request, res: Response) {
     res.json(updated);
 }
 
-export { getSellerbyId, updateSellerStoreNameById, getSellerProductsBySellerId, getSellerOrdersBySellerId, updateSellerOrderStatusById, updateSellerProductStockById, updateSellerProductDetailsById };
+export { getSellerbyId, updateSellerStoreNameById, getSellerProductsBySellerId, getSellerOrdersBySellerId, updateSellerOrderStatusById, updateSellerProductStockById, updateSellerProductDetailsById, updateSellerProductImagesById };

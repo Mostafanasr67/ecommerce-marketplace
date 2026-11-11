@@ -15,6 +15,12 @@ type SellerProductCreate = {
     categoryId: string;
     discountType: "PERCENT" | "FIXED" | null;
     discountValue: number | null;
+    images: ProductImageAsset[];
+};
+
+type ProductImageAsset = {
+    url: string;
+    publicId: string;
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -59,6 +65,51 @@ async function createSellerProduct(product: SellerProductCreate) {
     });
 }
 
+async function uploadSellerProductImage(file: File): Promise<ProductImageAsset> {
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+    formData.append("image", file);
+    const headers: HeadersInit = {};
+    if (token) headers.Authorization = "Bearer " + token;
+    const response = await fetch(`${API_URL}/products/images`, {
+        method: "POST",
+        headers,
+        body: formData,
+    });
+    if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.message ?? body?.error ?? `Image upload failed with status ${response.status}`);
+    }
+    return response.json() as Promise<ProductImageAsset>;
+}
+
+async function deleteSellerProductImage(publicId: string) {
+    const token = localStorage.getItem("token");
+    const headers: HeadersInit = { "Content-Type": "application/json" };
+    if (token) headers.Authorization = "Bearer " + token;
+    const response = await fetch(`${API_URL}/products/images`, {
+        method: "DELETE",
+        headers,
+        body: JSON.stringify({ publicId }),
+    });
+    if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.message ?? body?.error ?? `Image cleanup failed with status ${response.status}`);
+    }
+}
+
+async function updateSellerProductImages(
+    sellerId: string,
+    productId: string,
+    expectedUpdatedAt: string,
+    images: ({ id: string } | ProductImageAsset)[],
+) {
+    return request<{ id: string; updatedAt: string }>(
+        `/seller/${encodeURIComponent(sellerId)}/products/${encodeURIComponent(productId)}/images`,
+        { method: "PATCH", body: JSON.stringify({ expectedUpdatedAt, images }) },
+    );
+}
+
 async function updateSellerProductStock(sellerId: string, productId: string, expectedStock: number, stock: number) {
     return request<Pick<SellerProduct, "id" | "stock">>(
         `/seller/${encodeURIComponent(sellerId)}/products/${encodeURIComponent(productId)}/stock`,
@@ -93,5 +144,5 @@ async function updateSellerOrderStatus(sellerId: string, orderId: string, status
     );
 }
 
-export { fetchSeller, updateSellerStoreName, fetchSellerProducts, fetchProductCategories, createSellerProduct, fetchSellerOrders, updateSellerOrderStatus, updateSellerProductStock, updateSellerProductDetails };
-export type { ProductCategory, SellerProductCreate, SellerProductDetails };
+export { fetchSeller, updateSellerStoreName, fetchSellerProducts, fetchProductCategories, createSellerProduct, uploadSellerProductImage, deleteSellerProductImage, updateSellerProductImages, fetchSellerOrders, updateSellerOrderStatus, updateSellerProductStock, updateSellerProductDetails };
+export type { ProductCategory, ProductImageAsset, SellerProductCreate, SellerProductDetails };

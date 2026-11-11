@@ -19,7 +19,7 @@ type SellerProduct = {
 	createdAt: string;
 	updatedAt: string;
 	category: { id: string; name: string };
-	productImages: { id: string; url: string; altText: string; sortOrder: number }[];
+	productImages: { id: string; url: string; publicId: string | null; altText: string; sortOrder: number }[];
 };
 
 type SellerOrder = {

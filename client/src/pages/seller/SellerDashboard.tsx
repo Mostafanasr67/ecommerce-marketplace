@@ -9,9 +9,11 @@ import SellerTopBar from "../../components/seller/dashboard/SellerTopBar";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSeller, fetchSellerOrders, fetchSellerProducts } from "./SellerHelper";
 import { getCurrentUserId } from "../../utils/currentUser";
+import { useNavigate } from "react-router-dom";
 
 function SellerDashboard({ onLogout }: { onLogout: () => void }) {
     const userId = getCurrentUserId();
+	const navigate = useNavigate();
 
     const sellerQuery = useQuery({
 		queryKey: ["seller", userId],
@@ -58,7 +60,7 @@ function SellerDashboard({ onLogout }: { onLogout: () => void }) {
 					{sellerQuery.isError && <p role="alert" className="text-error">Failed to load seller profile: {sellerQuery.error.message}</p>}
 					{seller && (
 						<>
-							<DashboardWelcome seller={seller} />
+							<DashboardWelcome seller={seller} onAddProduct={() => navigate("/seller-products?addProduct=1")} />
 							{(ordersQuery.isPending || productsQuery.isPending) && <p>Loading dashboard data...</p>}
 							{ordersQuery.isError && <p role="alert" className="text-error">Failed to load orders: {ordersQuery.error.message}</p>}
 							{productsQuery.isError && <p role="alert" className="text-error">Failed to load products: {productsQuery.error.message}</p>}

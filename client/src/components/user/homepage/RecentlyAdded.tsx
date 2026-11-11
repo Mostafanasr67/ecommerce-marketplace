@@ -3,8 +3,13 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Product } from "../../../types/cart";
 
+type RecentProduct = Product & {
+	averageRating?: number;
+	reviewCount?: number;
+};
+
 function useRecentProducts() {
-	const [recentProducts, setRecentProducts] = useState<Product[]>([]);
+	const [recentProducts, setRecentProducts] = useState<RecentProduct[]>([]);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -73,6 +78,8 @@ function RecentlyAdded({ wishlist, toggleWishlist }: RecentlyAddedProps) {
 						image={product.productImages?.[0]?.url}
 						price={product.price}
 						originalPrice={product.originalPrice}
+						rating={product.averageRating}
+						reviewCount={product.reviewCount}
 						seller={product.seller?.storeName ?? "Marketplace"}
 						wishlist={wishlist}
 						toggleWishlist={toggleWishlist}

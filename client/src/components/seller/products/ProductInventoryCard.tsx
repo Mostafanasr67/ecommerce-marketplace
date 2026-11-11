@@ -1,7 +1,12 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import type { SellerProduct } from "../../../types/seller";
-import type { ProductCategory, SellerProductDetails } from "../../../pages/seller/SellerHelper";
+import { deleteSellerProductImage, uploadSellerProductImage } from "../../../pages/seller/SellerHelper";
+import type { ProductCategory, ProductImageAsset, SellerProductDetails } from "../../../pages/seller/SellerHelper";
+
+type ImageDraft =
+	| { kind: "existing"; id: string; url: string; altText: string }
+	| { kind: "new"; file: File; preview: string };
 
 interface ProductInventoryCardProps {
 	product: SellerProduct;
@@ -9,9 +14,10 @@ interface ProductInventoryCardProps {
 	categoriesLoading: boolean;
 	onSaveStock: (productId: string, expectedStock: number, stock: number) => Promise<void>;
 	onSaveDetails: (productId: string, details: SellerProductDetails) => Promise<void>;
+	onSaveImages: (productId: string, expectedUpdatedAt: string, images: ({ id: string } | ProductImageAsset)[]) => Promise<void>;
 }
 
-function ProductInventoryCard({ product, categories, categoriesLoading, onSaveStock, onSaveDetails }: ProductInventoryCardProps) {
+function ProductInventoryCard({ product, categories, categoriesLoading, onSaveStock, onSaveDetails, onSaveImages }: ProductInventoryCardProps) {
 	const [editing, setEditing] = useState(false);
 	const [value, setValue] = useState("");
 	const [expectedStock, setExpectedStock] = useState(product.stock);
@@ -24,6 +30,8 @@ function ProductInventoryCard({ product, categories, categoriesLoading, onSaveSt
 	const [discountType, setDiscountType] = useState<"PERCENT" | "FIXED" | "NONE">("NONE");
 	const [discountValue, setDiscountValue] = useState("");
 	const [expectedUpdatedAt, setExpectedUpdatedAt] = useState("");
+	const [editingImages, setEditingImages] = useState(false);
+	const [imageDrafts, setImageDrafts] = useState<ImageDraft[]>([]);
 	const image = product.productImages.find((item) => item.url.trim());
 	const stockLabel = product.stock === 0 ? "Out of stock" : product.stock < 10 ? "Low stock" : "In stock";
 
@@ -43,6 +51,97 @@ function ProductInventoryCard({ product, categories, categoriesLoading, onSaveSt
 		setExpectedUpdatedAt(product.updatedAt);
 		setError(null);
 		setEditingDetails(true);
+	}
+
+	function startEditingImages() {
+		setImageDrafts(product.productImages.map((item) => ({
+			kind: "existing",
+			id: item.id,
+			url: item.url,
+			altText: item.altText,
+		})));
+		setError(null);
+		setEditingImages(true);
+	}
+
+	function cancelImageEditing() {
+		imageDrafts.forEach((item) => {
+			if (item.kind === "new") URL.revokeObjectURL(item.preview);
+		});
+		setImageDrafts([]);
+		setEditingImages(false);
+		setError(null);
+	}
+
+	function addImageFiles(files: File[]) {
+		if (imageDrafts.length + files.length > 5) {
+			setError("A product can have up to five images.");
+			return;
+		}
+		const invalidType = files.find((file) => !["image/jpeg", "image/png", "image/webp"].includes(file.type));
+		if (invalidType) {
+			setError(`${invalidType.name} is not a JPEG, PNG, or WebP image.`);
+			return;
+		}
+		const oversized = files.find((file) => file.size > 5 * 1024 * 1024);
+		if (oversized) {
+			setError(`${oversized.name} is larger than 5 MB.`);
+			return;
+		}
+		setError(null);
+		setImageDrafts((current) => [
+			...current,
+			...files.map((file) => ({ kind: "new" as const, file, preview: URL.createObjectURL(file) })),
+		]);
+	}
+
+	function removeImageDraft(index: number) {
+		const item = imageDrafts[index];
+		if (item?.kind === "new") URL.revokeObjectURL(item.preview);
+		setImageDrafts((current) => current.filter((_, itemIndex) => itemIndex !== index));
+	}
+
+	function moveImage(index: number, offset: -1 | 1) {
+		const targetIndex = index + offset;
+		if (targetIndex < 0 || targetIndex >= imageDrafts.length) return;
+		setImageDrafts((current) => {
+			const reordered = [...current];
+			[reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
+			return reordered;
+		});
+	}
+
+	async function saveImages() {
+		setSaving(true);
+		setError(null);
+		const uploadedImages: ProductImageAsset[] = [];
+		try {
+			const images: ({ id: string } | ProductImageAsset)[] = [];
+			for (const item of imageDrafts) {
+				if (item.kind === "existing") {
+					images.push({ id: item.id });
+				} else {
+					const uploaded = await uploadSellerProductImage(item.file);
+					uploadedImages.push(uploaded);
+					images.push(uploaded);
+				}
+			}
+			await onSaveImages(product.id, product.updatedAt, images);
+			imageDrafts.forEach((item) => {
+				if (item.kind === "new") URL.revokeObjectURL(item.preview);
+			});
+			setImageDrafts([]);
+			setEditingImages(false);
+		} catch (err) {
+			const message = err instanceof Error ? err.message : "Failed to update product images.";
+			const cleanup = await Promise.allSettled(uploadedImages.map((uploaded) => deleteSellerProductImage(uploaded.publicId)));
+			const cleanupFailures = cleanup.filter((result) => result.status === "rejected").length;
+			setError(cleanupFailures > 0
+				? `${message} Cleanup also failed for ${cleanupFailures} uploaded image${cleanupFailures === 1 ? "" : "s"}.`
+				: message);
+		} finally {
+			setSaving(false);
+		}
 	}
 
 	async function handleDetailsSubmit(event: FormEvent<HTMLFormElement>) {
@@ -97,37 +196,48 @@ function ProductInventoryCard({ product, categories, categoriesLoading, onSaveSt
 	return (
 		<article className="flex flex-col gap-space-md rounded-xl border border-surface-container bg-surface-container-lowest p-space-md shadow-sm">
 			<div className="flex flex-col gap-space-md sm:flex-row sm:items-center">
-			<div className="flex min-w-0 flex-1 items-center gap-space-md">
-				{image ? (
-					<img src={image.url} alt={image.altText || product.name} className="h-20 w-20 shrink-0 rounded-lg bg-surface-container object-cover" />
-				) : (
-					<div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-surface-container-low text-outline">
-						<span className="material-symbols-outlined" aria-hidden="true">inventory_2</span>
+				<div className="flex min-w-0 flex-1 items-center gap-space-md">
+					{image ? (
+						<img src={image.url} alt={image.altText || product.name} className="h-20 w-20 shrink-0 rounded-lg bg-surface-container object-cover" />
+					) : (
+						<div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-surface-container-low text-outline">
+							<span className="material-symbols-outlined" aria-hidden="true">inventory_2</span>
+						</div>
+					)}
+					<div className="min-w-0">
+						<h2 className="break-words font-title-md text-title-md font-semibold text-on-surface">{product.name}</h2>
+						<p className="mt-1 font-body-sm text-on-surface-variant">{product.category.name}</p>
+						<p className="mt-2 font-label-md font-semibold text-on-surface">{Number(product.price).toLocaleString("en-EG", { maximumFractionDigits: 2 })} EGP</p>
+						{product.discountType && <p className="mt-1 font-label-sm text-on-surface-variant">Discount: {product.discountValue}{product.discountType === "PERCENT" ? "%" : " EGP"}</p>}
 					</div>
-				)}
-				<div className="min-w-0">
-					<h2 className="break-words font-title-md text-title-md font-semibold text-on-surface">{product.name}</h2>
-					<p className="mt-1 font-body-sm text-on-surface-variant">{product.category.name}</p>
-					<p className="mt-2 font-label-md font-semibold text-on-surface">{Number(product.price).toLocaleString("en-EG", { maximumFractionDigits: 2 })} EGP</p>
-					{product.discountType && <p className="mt-1 font-label-sm text-on-surface-variant">Discount: {product.discountValue}{product.discountType === "PERCENT" ? "%" : " EGP"}</p>}
 				</div>
-			</div>
-			<div className="sm:w-72 sm:shrink-0">
-				<div className="flex items-center justify-between gap-space-md">
+				<div className="flex shrink-0 items-center gap-space-md sm:w-40 sm:justify-end">
 					<div>
 						<p className="font-label-sm text-on-surface-variant">{stockLabel}</p>
 						<p className="mt-1 font-label-lg font-semibold text-on-surface">{product.stock.toLocaleString("en-EG")} units</p>
 					</div>
-					{!editing && !editingDetails && (
-						<div className="flex gap-2">
-						<button type="button" onClick={startEditing} className="cursor-pointer rounded-lg border border-outline-variant px-4 py-2 font-label-md font-semibold text-on-surface transition-colors hover:bg-surface-container-low focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+				</div>
+			</div>
+			<div className="flex flex-wrap gap-space-sm border-t border-surface-container pt-space-md">
+				{!editing && !editingDetails && !editingImages && (
+					<>
+						<button type="button" onClick={startEditing} className="cursor-pointer rounded-lg border border-outline-variant px-space-md py-2 font-label-md font-semibold text-on-surface transition-colors hover:bg-surface-container-low focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
 							Edit stock
 						</button>
-						<button type="button" onClick={startEditingDetails} className="cursor-pointer rounded-lg border border-outline-variant px-4 py-2 font-label-md font-semibold text-on-surface hover:bg-surface-container-low focus-visible:outline-2 focus-visible:outline-primary">Edit details</button>
-						</div>
-					)}
-				</div>
-				</div>
+						<button type="button" onClick={startEditingDetails} className="cursor-pointer rounded-lg border border-outline-variant px-space-md py-2 font-label-md font-semibold text-on-surface hover:bg-surface-container-low focus-visible:outline-2 focus-visible:outline-primary">Edit details</button>
+					</>
+				)}
+				{!editing && !editingDetails && (
+					<button
+						type="button"
+						aria-expanded={editingImages}
+						onClick={() => editingImages ? cancelImageEditing() : startEditingImages()}
+						className={`cursor-pointer rounded-lg border px-space-md py-2 font-label-md font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-primary ${editingImages ? "border-primary bg-primary-fixed text-primary" : "border-outline-variant text-on-surface hover:bg-surface-container-low"}`}
+					>
+						{editingImages ? "Close image manager" : "Manage images"}
+					</button>
+				)}
+			</div>
 				{editingDetails && (
 					<form onSubmit={handleDetailsSubmit} className="grid gap-space-md border-t border-surface-container pt-space-md sm:grid-cols-2">
 						<label className="flex flex-col gap-1 font-label-sm">Product name
@@ -189,7 +299,57 @@ function ProductInventoryCard({ product, categories, categoriesLoading, onSaveSt
 						{error && <p role="alert" className="mt-2 font-body-sm text-error">{error}</p>}
 					</form>
 				)}
-			</div>
+				{editingImages && (
+					<div className="rounded-xl border border-outline-variant/70 bg-surface-container-low p-space-md">
+						<div className="flex flex-wrap items-center justify-between gap-space-sm">
+							<div>
+								<h3 className="font-title-md text-title-md font-semibold text-on-surface">Manage product images</h3>
+								<p className="mt-1 font-body-sm text-on-surface-variant">Reorder images with the arrows. The first image is shown as the main product image.</p>
+							</div>
+							<label className="cursor-pointer rounded-lg border border-outline-variant px-3 py-2 font-label-sm font-semibold text-on-surface hover:bg-surface-container-low">
+								Add images
+								<input
+									type="file"
+									accept="image/jpeg,image/png,image/webp"
+									multiple
+									disabled={saving || imageDrafts.length >= 5}
+									onChange={(event) => {
+										addImageFiles(Array.from(event.target.files ?? []));
+										event.target.value = "";
+									}}
+									className="sr-only"
+								/>
+							</label>
+						</div>
+						<div className="mt-space-md grid grid-cols-2 gap-space-sm sm:grid-cols-3 lg:grid-cols-5">
+							{imageDrafts.map((item, index) => (
+								<div key={item.kind === "existing" ? item.id : `${item.file.name}-${item.file.lastModified}-${index}`} className="overflow-hidden rounded-lg border border-outline-variant bg-surface-container-lowest">
+									<div className="aspect-square bg-surface-container-low">
+										<img src={item.kind === "existing" ? item.url : item.preview} alt={item.kind === "existing" ? item.altText || product.name : `${product.name} preview ${index + 1}`} className="h-full w-full object-cover" />
+									</div>
+									<div className="flex items-center justify-between gap-1 p-1">
+										<button type="button" aria-label="Move image earlier" disabled={saving || index === 0} onClick={() => moveImage(index, -1)} className="flex h-8 w-8 items-center justify-center rounded-md text-on-surface hover:bg-surface-container-low disabled:opacity-40">
+											<span className="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+										</button>
+										<span className="font-label-sm text-on-surface-variant">{index === 0 ? "Main" : index + 1}</span>
+										<button type="button" aria-label="Move image later" disabled={saving || index === imageDrafts.length - 1} onClick={() => moveImage(index, 1)} className="flex h-8 w-8 items-center justify-center rounded-md text-on-surface hover:bg-surface-container-low disabled:opacity-40">
+											<span className="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+										</button>
+										<button type="button" aria-label="Remove image" disabled={saving} onClick={() => removeImageDraft(index)} className="flex h-8 w-8 items-center justify-center rounded-md text-error hover:bg-error-container disabled:opacity-40">
+											<span className="material-symbols-outlined" aria-hidden="true">delete</span>
+										</button>
+									</div>
+								</div>
+							))}
+							{imageDrafts.length === 0 && <p className="col-span-full rounded-lg bg-surface-container-low p-space-md text-center font-body-sm text-on-surface-variant">No product images selected.</p>}
+						</div>
+						{error && <p role="alert" className="mt-space-md font-body-sm text-error">{error}</p>}
+						<div className="mt-space-md flex gap-2">
+							<button type="button" disabled={saving} onClick={cancelImageEditing} className="rounded-lg px-4 py-2 font-label-md text-on-surface-variant hover:bg-surface-container-low disabled:opacity-50">Cancel</button>
+							<button type="button" disabled={saving} onClick={() => void saveImages()} className="rounded-lg bg-primary px-4 py-2 font-label-md font-semibold text-on-primary disabled:opacity-50">{saving ? "Saving..." : "Save images"}</button>
+						</div>
+					</div>
+				)}
 		</article>
 	);
 }

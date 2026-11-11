@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { OrderStatus, PaymentStatus } from "../../generated/prisma/enums.js";
-import { getAdminOverview, getAdminUsers, getAdminSellers, getAdminProducts, getAdminCategories, getAdminOrders, getAdminFilterOptions, updateAdminOrderStatus } from "../services/admin.service.js";
+import { OrderStatus, PaymentStatus, Role } from "../../generated/prisma/enums.js";
+import { getAdminOverview, getAdminUsers, updateAdminUserRole, getAdminSellers, getAdminProducts, getAdminCategories, getAdminOrders, getAdminFilterOptions, updateAdminOrderStatus } from "../services/admin.service.js";
 import AppError from "../utils/appError.js";
 
 function stringQuery(req: Request, key: string, fallback = "") {
@@ -28,6 +28,26 @@ async function fetchAdminOverview(_req: Request, res: Response) {
 async function fetchAdminUsers(req: Request, res: Response) {
     const params = pagination(req);
     res.json(await getAdminUsers(params));
+}
+
+async function changeAdminUserRole(req: Request, res: Response) {
+    const { userId } = req.params as { userId: string };
+    const role: unknown = req.body?.role;
+    const storeName: unknown = req.body?.storeName;
+
+    if (!userId) throw new AppError("User ID is required", 400);
+    if (userId === req.user?.id) throw new AppError("You cannot change your own role", 400);
+    if (typeof role !== "string" || !Object.values(Role).includes(role as Role)) {
+        throw new AppError("Invalid user role", 400);
+    }
+    if (storeName !== undefined && typeof storeName !== "string") {
+        throw new AppError("Store name must be a string", 400);
+    }
+    if (typeof storeName === "string" && storeName.trim().length > 120) {
+        throw new AppError("Store name must be 120 characters or fewer", 400);
+    }
+
+    res.json(await updateAdminUserRole(userId, role as Role, typeof storeName === "string" ? storeName : undefined));
 }
 
 async function fetchAdminSellers(req: Request, res: Response) {
@@ -82,4 +102,4 @@ async function changeAdminOrderStatus(req: Request, res: Response) {
     res.json(await updateAdminOrderStatus(orderId, status as OrderStatus));
 }
 
-export { fetchAdminOverview, fetchAdminUsers, fetchAdminSellers, fetchAdminProducts, fetchAdminCategories, fetchAdminOrders, fetchAdminFilterOptions, changeAdminOrderStatus };
+export { fetchAdminOverview, fetchAdminUsers, changeAdminUserRole, fetchAdminSellers, fetchAdminProducts, fetchAdminCategories, fetchAdminOrders, fetchAdminFilterOptions, changeAdminOrderStatus };

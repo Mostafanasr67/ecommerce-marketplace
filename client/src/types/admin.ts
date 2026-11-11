@@ -32,6 +32,7 @@ export type AdminUser = {
 	email: string;
 	role: "USER" | "SELLER" | "ADMIN";
 	createdAt: string;
+	seller: { storeName: string } | null;
 };
 
 export type AdminSeller = {
@@ -59,7 +60,7 @@ export type AdminProduct = {
 	createdAt: string;
 	category: { id: string; name: string };
 	seller: { id: string; storeName: string; user: { name: string | null; email: string } };
-	productImages: { id: string; url: string; altText: string }[];
+	productImages: { id: string; url: string; publicId?: string | null; altText: string }[];
 };
 
 export type AdminOrder = {

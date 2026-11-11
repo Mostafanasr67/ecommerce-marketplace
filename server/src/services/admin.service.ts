@@ -1,5 +1,5 @@
 import prisma from "../prisma.js";
-import { OrderStatus, PaymentStatus, SellerOrderStatus } from "../../generated/prisma/enums.js";
+import { OrderStatus, PaymentStatus, Role, SellerOrderStatus } from "../../generated/prisma/enums.js";
 import AppError from "../utils/appError.js";
 
 type ListParams = {
@@ -83,11 +83,36 @@ async function getAdminUsers(params: ListParams) {
             orderBy: { createdAt: "desc" },
             skip: (params.page - 1) * params.limit,
             take: params.limit,
-            select: { id: true, name: true, email: true, role: true, createdAt: true },
+            select: { id: true, name: true, email: true, role: true, createdAt: true, seller: { select: { storeName: true } } },
         }),
         prisma.user.count({ where }),
     ]);
     return paginated(items, totalCount, params.page, params.limit);
+}
+
+async function updateAdminUserRole(userId: string, role: Role, storeName: string | undefined) {
+    return prisma.$transaction(async (transaction) => {
+        const user = await transaction.user.findUnique({
+            where: { id: userId },
+            select: { id: true, seller: { select: { id: true } } },
+        });
+        if (!user) throw new AppError("User not found", 404);
+        if (role === Role.SELLER && !user.seller && !storeName?.trim()) {
+            throw new AppError("A store name is required when creating a seller profile", 400);
+        }
+
+        if (role === Role.SELLER && !user.seller) {
+            await transaction.seller.create({
+                data: { userId, storeName: storeName!.trim() },
+            });
+        }
+
+        return transaction.user.update({
+            where: { id: userId },
+            data: { role },
+            select: { id: true, name: true, email: true, role: true, createdAt: true, seller: { select: { storeName: true } } },
+        });
+    });
 }
 
 async function getAdminSellers(params: ListParams) {
@@ -227,4 +252,4 @@ async function getAdminFilterOptions() {
     return { categories, sellers };
 }
 
-export { getAdminOverview, getAdminUsers, getAdminSellers, getAdminProducts, getAdminCategories, getAdminOrders, getAdminFilterOptions, updateAdminOrderStatus };
+export { getAdminOverview, getAdminUsers, updateAdminUserRole, getAdminSellers, getAdminProducts, getAdminCategories, getAdminOrders, getAdminFilterOptions, updateAdminOrderStatus };

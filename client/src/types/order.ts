@@ -11,6 +11,7 @@ type OrderItem = {
         productImages?: Array<{
             id: string;
             url: string;
+            publicId?: string | null;
             altText: string;
         }>;
     };

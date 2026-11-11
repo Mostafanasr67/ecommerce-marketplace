@@ -1,6 +1,6 @@
 import type { Seller } from "../../../types/seller";
 
-function DashboardWelcome({ seller }: { seller: Seller }) {
+function DashboardWelcome({ seller, onAddProduct }: { seller: Seller; onAddProduct: () => void }) {
 	return (
 		<div className="flex flex-col justify-between gap-space-md lg:flex-row lg:items-center">
 			<div className="flex flex-col gap-space-xs">
@@ -14,6 +14,7 @@ function DashboardWelcome({ seller }: { seller: Seller }) {
 			<div className="flex flex-wrap items-center gap-space-sm">
 				<button
 					type="button"
+					onClick={onAddProduct}
 					className="flex h-11 items-center gap-2 rounded-xl bg-primary-container px-space-lg font-label-lg text-on-primary shadow-sm transition-all hover:bg-primary active:scale-[0.99]"
 				>
 					<span className="material-symbols-outlined text-[20px]">add</span>
